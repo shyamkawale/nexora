@@ -1,0 +1,18 @@
+    <div class="settings-container">
+      <div class="settings-header">
+        <h1>Settings</h1>
+      </div>
+      <div class="settings-content">
+        <div class="settings-menu">
+          <button class="menu-item active">Profile</button>
+          <button class="menu-item">Security</button>
+          <button class="menu-item">Notifications</button>
+          <button class="menu-item">Privacy</button>
+          <button class="menu-item">Preferences</button>
+        </div>
+        <div class="settings-panel">
+          <app-loader [isLoading]="true" message="Loading settings..."></app-loader>
+        </div>
+      </div>
+    </div>
+  

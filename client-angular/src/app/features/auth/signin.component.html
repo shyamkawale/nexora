@@ -1,0 +1,46 @@
+    <div class="signin-card">
+      <h1>Sign In</h1>
+      <app-error-message [message]="errorMessage"></app-error-message>
+      
+      <form [formGroup]="signinForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="Enter your email"
+          />
+          <div *ngIf="signinForm.get('email')?.invalid && signinForm.get('email')?.touched" class="error">
+            Please enter a valid email
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-input-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              formControlName="password"
+              placeholder="Enter your password"
+            />
+            <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+              <mat-icon>{{ showPassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </button>
+          </div>
+          <div *ngIf="signinForm.get('password')?.invalid && signinForm.get('password')?.touched" class="error">
+            Password is required
+          </div>
+        </div>
+
+        <button type="submit" [disabled]="signinForm.invalid || isLoading">
+          {{ isLoading ? 'Signing in...' : 'Sign In' }}
+        </button>
+      </form>
+
+      <p class="signup-link">
+        Don't have an account? <a routerLink="/auth/signup">Sign up</a>
+      </p>
+    </div>
+  

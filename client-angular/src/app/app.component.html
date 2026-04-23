@@ -1,0 +1,40 @@
+    <div class="app-container">
+      <!-- Loading screen while auth initializes -->
+      <div class="auth-loading" *ngIf="isInitializing$ | async">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+
+      <ng-container *ngIf="!(isInitializing$ | async)">
+        <nav class="navbar" *ngIf="isAuthenticated$ | async">
+          <div class="nav-brand">
+            <h2>CollabGen</h2>
+          </div>
+          <ul class="nav-menu">
+            <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
+            <li><a routerLink="/feed" routerLinkActive="active">Feed</a></li>
+            <li><a routerLink="/chat" routerLinkActive="active">Chat</a></li>
+            <li><a routerLink="/people" routerLinkActive="active">People</a></li>
+            <li><a routerLink="/settings" routerLinkActive="active">Settings</a></li>
+            <li *ngIf="isAdmin$ | async"><a routerLink="/admin/dashboard" routerLinkActive="active" class="admin-link">👨‍💼 Admin Dashboard</a></li>
+          </ul>
+          <div class="nav-user-info" (click)="navigateToProfile()" routerLink="/user">
+            <div class="user-avatar">👤</div>
+            <div class="user-details" *ngIf="currentUser$ | async as user">
+              <div class="user-greeting">Hey {{ user.username || user.email }}</div>
+              <div class="user-email">{{ user.email }}</div>
+            </div>
+          </div>
+          <div class="nav-actions">
+            <button (click)="logout()" class="logout-btn">Logout</button>
+          </div>
+        </nav>
+
+        <main class="main-content">
+          <router-outlet></router-outlet>
+        </main>
+      </ng-container>
+    </div>
+  

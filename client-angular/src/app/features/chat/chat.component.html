@@ -1,0 +1,333 @@
+    <div class="chat-container">
+      <div class="chat-sidebar">
+        <div class="chat-header-bar">
+          <h2>Chats</h2>
+          <button class="refresh-chats-btn" (click)="refreshChats()" [disabled]="loadingChats" title="Refresh chats">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+        
+        <!-- Chat Type Tabs -->
+        <div class="chat-tabs">
+          <button [class.active]="chatType === 'all'" (click)="changeChatType('all')" class="tab-btn">All</button>
+          <button [class.active]="chatType === 'direct'" (click)="changeChatType('direct')" class="tab-btn">Direct</button>
+          <button [class.active]="chatType === 'group'" (click)="changeChatType('group')" class="tab-btn">
+            Groups
+            <button *ngIf="chatType === 'group'" (click)="openCreateGroupModal(); $event.stopPropagation()" class="tab-add-btn" title="Create a new group">+</button>
+          </button>
+        </div>
+
+        <div class="chat-list">
+          <app-loader *ngIf="loadingChats" [isLoading]="true" message="Loading chats..."></app-loader>
+          <div *ngIf="!loadingChats && userChats.length === 0" class="no-chats">
+            <p>No chats yet</p>
+          </div>
+          <div *ngFor="let chat of userChats" 
+               class="chat-item" 
+               [class.active]="selectedChatId === chat.publicId"
+               (click)="selectChat(chat)">
+            <div class="chat-info">
+              <div class="chat-name-row">
+                <p class="chat-name">
+                  <span *ngIf="isGroupChat(chat)" class="chat-badge">👥</span>
+                  <span *ngIf="isDirectChat(chat)" class="chat-badge">💬</span>
+                  {{ getChatName(chat) }}
+                </p>
+                <!-- Online/Offline indicator for direct chats -->
+                <span *ngIf="isDirectChat(chat)" 
+                      class="online-indicator" 
+                      [class.online]="isUserOnline(getOtherUserId(chat))"
+                      [title]="isUserOnline(getOtherUserId(chat)) ? 'Online' : 'Offline'">
+                  <span class="dot"></span>
+                  <span class="status-text">{{ isUserOnline(getOtherUserId(chat)) ? 'Online' : 'Offline' }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-main">
+        <div *ngIf="selectedChat" class="chat-content">
+          <div class="chat-header">
+            <div class="header-left">
+              <h3>
+                <span *ngIf="selectedChatType === 'group'" class="chat-badge">👥</span>
+                <span *ngIf="selectedChatType === 'direct'" class="chat-badge">💬</span>
+                {{ getChatName(selectedChat) }}
+              </h3>
+            </div>
+            <div class="header-right">
+              <button *ngIf="selectedChatType === 'group'" 
+                      (click)="toggleGroupDetails()" 
+                      class="details-toggle-btn"
+                      [class.active]="showGroupDetails">
+                ℹ️ Info
+              </button>
+            </div>
+          </div>
+
+          <div class="chat-content-wrapper">
+            <div class="messages-container">
+              <app-loader *ngIf="loadingMessages" [isLoading]="true" message="Loading messages..."></app-loader>
+              <div *ngIf="!loadingMessages && messages.length === 0" class="no-messages">
+                <p>No messages yet. Start the conversation!</p>
+              </div>
+              <div *ngFor="let msg of messages" class="message" [class.sent]="isCurrentUserMessage(msg)">
+                <div class="message-bubble">
+                  <div *ngIf="selectedChatType === 'group' || !isCurrentUserMessage(msg)" class="message-sender">
+                    {{ msg.sender?.username || msg.sender?.email || 'Unknown User' }}
+                  </div>
+                  
+                  <!-- Message Text -->
+                  <p *ngIf="getMessageText(msg)">{{ getMessageText(msg) }}</p>
+                  
+                  <!-- File Attachments -->
+                  <div *ngIf="getMessageFiles(msg).length > 0" class="message-files">
+                    <ng-container *ngFor="let file of getMessageFiles(msg)">
+                      <div class="message-file" *ngIf="isSupportedFileType(file)">
+                        <!-- Image Preview (PNG, JPG, JPEG, WEBP) - use presigned URL from cache -->
+                        <div *ngIf="isImageUrl(file)" class="file-item image-item">
+                          <img [src]="presignedUrlCache.get(file) || file" 
+                               alt="shared image" 
+                               class="message-file-img"
+                               (click)="openImagePreview(file)" />
+                          <button class="download-btn" (click)="downloadFile(file)" title="Download">
+                            ⬇️ Download
+                          </button>
+                        </div>
+                        
+                        <!-- PDF Download Link -->
+                        <div *ngIf="isPdfUrl(file)" class="file-item pdf-item">
+                          <a (click)="openImagePreview(file)" 
+                             class="message-file-link"
+                             role="button"
+                             style="cursor: pointer;">
+                            📄 {{ extractFileName(file) }}
+                          </a>
+                          <button class="download-btn" (click)="downloadFile(file)" title="Download">
+                            ⬇️ Download
+                          </button>
+                        </div>
+                      </div>
+                    </ng-container>
+                  </div>
+                  
+                  <span class="message-time">{{ msg.createdAt | date:'short' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group Details Panel -->
+            <div *ngIf="selectedChatType === 'group' && showGroupDetails" class="group-details-panel">
+              <div class="details-header">
+                <h3>Group Info</h3>
+                <button (click)="toggleGroupDetails()" class="close-details-btn">✕</button>
+              </div>
+
+              <div class="details-content">
+                <!-- Group Avatar/Icon -->
+                <div class="group-avatar">👥</div>
+
+                <!-- Group Name -->
+                <div class="detail-section">
+                  <label>Group Name</label>
+                  <p class="detail-value">{{ groupDetails.groupName }}</p>
+                </div>
+
+                <!-- Description -->
+                <div class="detail-section">
+                  <label>Description</label>
+                  <p class="detail-value">{{ groupDetails.description || 'No description' }}</p>
+                </div>
+
+                <!-- Created Info -->
+                <div class="detail-section">
+                  <label>Created By</label>
+                  <p class="detail-value">
+                    {{ groupDetails.createdBy?.username || groupDetails.createdBy?.email || 'Unknown' }}
+                  </p>
+                </div>
+
+                <div class="detail-section">
+                  <label>Created Date</label>
+                  <p class="detail-value">{{ groupDetails.createdAt | date:'medium' }}</p>
+                </div>
+
+                <!-- Members Section -->
+                <div class="detail-section members-section">
+                  <label>Members ({{ groupDetails.members.length || 0 }})</label>
+                  <div class="members-list">
+                    <div *ngFor="let member of groupDetails.members" class="member-item">
+                      <div class="member-avatar">
+                        <span class="avatar-letter">{{ (member.username || member.email)?.[0]?.toUpperCase() }}</span>
+                      </div>
+                      <div class="member-info">
+                        <div class="member-name">{{ member.username || member.email }}</div>
+                        <div class="member-status" [class.online]="isUserOnline(member.publicId)">
+                          <span class="dot"></span>
+                          {{ isUserOnline(member.publicId) ? 'Online' : 'Offline' }}
+                        </div>
+                      </div>
+                      <div *ngIf="groupDetails.createdBy?.publicId === member.publicId" class="admin-badge">
+                        Admin
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status -->
+                <div class="detail-section">
+                  <label>Status</label>
+                  <p class="detail-value" [class.active-status]="groupDetails.isActive">
+                    {{ groupDetails.isActive ? '🟢 Active' : '🔴 Inactive' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-input-area">
+            <!-- File Upload Progress -->
+            <div *ngIf="uploadProgress" class="upload-progress-container">
+              <div class="upload-item">
+                <div class="upload-info">
+                  <span class="upload-name">{{ uploadProgress.fileName }}</span>
+                  <span class="upload-percentage">{{ uploadProgress.percentage | number:'1.0-0' }}%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="uploadProgress.percentage"></div>
+                </div>
+                <div *ngIf="uploadProgress.status === 'failed'" class="upload-error">
+                  {{ uploadProgress.error }}
+                </div>
+              </div>
+            </div>
+
+            <!-- File Preview -->
+            <div *ngIf="previewFiles.length > 0" class="file-preview-container">
+              <div *ngFor="let file of previewFiles; let i = index" class="file-preview-item">
+                <img *ngIf="isImageFile(file.name)" [src]="file.preview" alt="preview" class="file-preview-img" />
+                <div *ngIf="!isImageFile(file.name)" class="file-icon">📄</div>
+                <div class="file-info">
+                  <p class="file-name">{{ file.name }}</p>
+                  <p class="file-size">{{ formatFileSize(file.size) }}</p>
+                </div>
+                <button (click)="removePreviewFile(i)" class="remove-file-btn" type="button">✕</button>
+              </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-controls">
+              <input 
+                #fileInput
+                type="file" 
+                hidden 
+                multiple
+                (change)="onFileSelected($event)"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+              />
+              <button (click)="fileInput.click()" 
+                      class="attach-file-btn" 
+                      type="button"
+                      title="Attach files"
+                      [disabled]="uploadProgress?.status === 'uploading'">
+                📎
+              </button>
+              <input 
+                type="text" 
+                [(ngModel)]="newMessage"
+                (keyup.enter)="sendMessage()"
+                placeholder="Type a message..."
+                class="message-input"
+                [disabled]="uploadProgress?.status === 'uploading'"
+              />
+              <button (click)="sendMessage()" 
+                      class="send-btn"
+                      [disabled]="(!newMessage.trim() && previewFiles.length === 0) || uploadProgress?.status === 'uploading'">
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!selectedChat" class="chat-placeholder">
+          <p>Select a chat to start messaging</p>
+        </div>
+      </div>
+
+      <!-- Create Group Modal -->
+      <div *ngIf="showCreateGroupModal" class="modal-overlay" (click)="closeCreateGroupModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Create a New Group</h3>
+            <button class="close-btn" (click)="closeCreateGroupModal()">&times;</button>
+          </div>
+
+          <form (ngSubmit)="submitCreateGroup()" class="create-group-form">
+            <div class="form-group">
+              <label for="groupName">Group Name *</label>
+              <input 
+                id="groupName"
+                type="text" 
+                [(ngModel)]="createGroupForm.groupName" 
+                name="groupName"
+                placeholder="Enter group name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea 
+                id="description"
+                [(ngModel)]="createGroupForm.description" 
+                name="description"
+                placeholder="Enter group description (optional)"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="memberSearch">Add Members</label>
+              <input 
+                id="memberSearch"
+                type="text"
+                [(ngModel)]="memberSearchQuery"
+                name="memberSearch"
+                placeholder="Search users..."
+                (input)="searchMembers()"
+              />
+              
+              <div *ngIf="memberSearchResults.length > 0" class="search-results">
+                <div *ngFor="let user of memberSearchResults" 
+                     class="search-result-item"
+                     (click)="toggleMemberSelection(user)">
+                  <input 
+                    type="checkbox" 
+                    [checked]="isUserSelected(user)"
+                    [id]="'user-' + user.publicId"
+                  />
+                  <label [for]="'user-' + user.publicId">
+                    {{ user.username || user.email }}
+                  </label>
+                </div>
+              </div>
+
+              <div class="selected-members">
+                <div *ngFor="let user of createGroupForm.selectedMembers" class="member-tag">
+                  {{ user.username || user.email }}
+                  <button type="button" (click)="toggleMemberSelection(user)" class="remove-btn">×</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" (click)="closeCreateGroupModal()" class="cancel-btn">Cancel</button>
+              <button type="submit" class="submit-btn" [disabled]="!createGroupForm.groupName.trim()">Create Group</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  

@@ -1,0 +1,29 @@
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+          placeholder="Search users..."
+          class="search-input"
+        />
+        <span class="search-icon">🔍</span>
+      </div>
+      <div class="search-results" *ngIf="showResults && results.length > 0">
+        <div
+          *ngFor="let user of results"
+          class="search-result-item"
+          (click)="selectUser(user)"
+        >
+          <img *ngIf="user.avatar" [src]="user.avatar" class="user-avatar" />
+          <div class="user-info">
+            <p class="user-name">{{ user.name }}</p>
+            <p class="user-email">{{ user.email }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="search-empty" *ngIf="showResults && results.length === 0">
+        No users found
+      </div>
+    </div>
+  

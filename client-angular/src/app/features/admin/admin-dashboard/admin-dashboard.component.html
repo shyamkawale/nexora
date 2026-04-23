@@ -1,0 +1,71 @@
+<div class="admin-dashboard-container">
+  <div class="header">
+    <h1>👨‍💼 Admin Dashboard</h1>
+    <p class="subtitle">Manage Users and System Settings</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    ⚠️ {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <div *ngIf="!loading && users.length === 0" class="no-users">
+    <p>No users found</p>
+  </div>
+
+  <div *ngIf="!loading && users.length > 0" class="users-table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users" [class.inactive]="!user.isActive">
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <span class="role-badge" [class.admin]="user.role === 'ADMIN'" [class.user]="user.role === 'USER'">
+              {{ user.role }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+              {{ user.isActive ? '🟢 Active' : '🔴 Inactive' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button 
+              *ngIf="user.isActive" 
+              (click)="deactivateUser(user.publicId)" 
+              class="btn-deactivate"
+              title="Deactivate user">
+              🔒 Deactivate
+            </button>
+            <button 
+              *ngIf="!user.isActive" 
+              (click)="activateUser(user.publicId)" 
+              class="btn-activate"
+              title="Activate user">
+              🔓 Activate
+            </button>
+            <button 
+              (click)="deleteUser(user.publicId)" 
+              class="btn-delete"
+              title="Delete user">
+              🗑️ Delete
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

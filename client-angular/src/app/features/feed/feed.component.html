@@ -1,0 +1,145 @@
+    <div class="feed-container">
+      <!-- Create Post Section -->
+      <div class="create-post-section">
+        <div class="post-input-container">
+          <div class="user-avatar">👤</div>
+          <div class="input-area">
+            <div class="input-toolbar">
+              <button class="refresh-posts-btn" (click)="refreshPosts()" [disabled]="loadingPosts" title="Refresh posts">
+                <mat-icon>refresh</mat-icon>
+              </button>
+            </div>
+            <textarea 
+              [(ngModel)]="newPost"
+              placeholder="What's on your mind?"
+              class="post-textarea"
+              rows="3"
+            ></textarea>
+            <button 
+              (click)="createPost()" 
+              class="post-btn"
+              [disabled]="!newPost.trim() || creatingPost"
+            >
+              {{ creatingPost ? 'Posting...' : 'Post' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feed Posts -->
+      <div class="feed-posts">
+        <app-loader *ngIf="loadingPosts" [isLoading]="true" message="Loading posts..."></app-loader>
+        
+        <div *ngIf="!loadingPosts && posts.length === 0" class="no-posts">
+          <p>No posts yet. Be the first to post something! 🎉</p>
+        </div>
+
+        <div *ngFor="let post of posts" class="post-card">
+          <!-- Post Header -->
+          <div class="post-header">
+            <div class="author-info">
+              <div class="author-avatar">👤</div>
+              <div class="author-details">
+                <div class="author-name">{{ post.author.username || post.author.email }}</div>
+                <div class="post-time">{{ post.createdAt | date:'short' }}</div>
+              </div>
+            </div>
+            <button 
+              *ngIf="isPostAuthor(post)"
+              (click)="deletePost(post.publicId)"
+              class="delete-btn"
+              title="Delete post"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Post Content -->
+          <div class="post-content">
+            <p>{{ post.content }}</p>
+          </div>
+
+          <!-- Post Stats -->
+          <div class="post-stats">
+            <span>❤️ {{ post.likeCount }} {{ post.likeCount === 1 ? 'like' : 'likes' }}</span>
+            <span>💬 {{ post.commentCount }} {{ post.commentCount === 1 ? 'comment' : 'comments' }}</span>
+          </div>
+
+          <!-- Post Actions -->
+          <div class="post-actions">
+            <button 
+              (click)="toggleLike(post)"
+              [class.liked]="post.likedByCurrentUser"
+              class="action-btn"
+            >
+              {{ post.likedByCurrentUser ? '❤️' : '🤍' }} Like
+            </button>
+            <button 
+              (click)="toggleComments(post.publicId)"
+              class="action-btn"
+            >
+              💬 Comment
+            </button>
+          </div>
+
+          <!-- Comments Section -->
+          <div *ngIf="expandedPostId === post.publicId" class="comments-section">
+            <!-- Comment Input -->
+            <div class="comment-input-container">
+              <div class="user-avatar-small">👤</div>
+              <input 
+                type="text"
+                [(ngModel)]="newComments[post.publicId]"
+                placeholder="Write a comment..."
+                class="comment-input"
+                (keyup.enter)="createComment(post.publicId)"
+              />
+              <button 
+                (click)="createComment(post.publicId)"
+                class="comment-submit-btn"
+                [disabled]="!getCommentText(post.publicId)"
+              >
+                Post
+              </button>
+            </div>
+
+            <!-- Comments List -->
+            <div class="comments-list">
+              <app-loader *ngIf="loadingComments[post.publicId]" [isLoading]="true" message="Loading comments..."></app-loader>
+              
+              <div *ngIf="!loadingComments[post.publicId] && postComments[post.publicId]?.length === 0" class="no-comments">
+                <p>No comments yet</p>
+              </div>
+
+              <div *ngFor="let comment of postComments[post.publicId]" class="comment-card">
+                <div class="comment-header">
+                  <div class="comment-author">
+                    <span class="author-name">{{ comment.author.username || comment.author.email }}</span>
+                    <span class="comment-time">{{ comment.createdAt | date:'short' }}</span>
+                  </div>
+                  <button 
+                    *ngIf="isCommentAuthor(comment)"
+                    (click)="deleteComment(comment.publicId)"
+                    class="delete-btn"
+                    title="Delete comment"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div class="comment-content">{{ comment.content }}</div>
+                <div class="comment-actions">
+                  <button 
+                    (click)="toggleCommentLike(comment, post.publicId)"
+                    [class.liked]="comment.likedByCurrentUser"
+                    class="action-btn-small"
+                  >
+                    {{ comment.likedByCurrentUser ? '❤️' : '🤍' }} {{ comment.likeCount }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  

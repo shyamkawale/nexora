@@ -1,0 +1,16 @@
+    <div class="popup-overlay" *ngIf="isVisible" (click)="onBackdropClick()">
+      <div class="popup-container" (click)="$event.stopPropagation()">
+        <div class="popup-header">
+          <h2>{{ title }}</h2>
+          <button class="close-btn" (click)="close()">×</button>
+        </div>
+        <div class="popup-body">
+          <ng-content></ng-content>
+        </div>
+        <div class="popup-footer" *ngIf="showFooter">
+          <button class="btn-cancel" (click)="close()">{{ cancelText }}</button>
+          <button class="btn-confirm" (click)="confirm()">{{ confirmText }}</button>
+        </div>
+      </div>
+    </div>
+  

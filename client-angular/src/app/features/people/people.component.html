@@ -1,0 +1,45 @@
+    <div class="people-container">
+      <div class="people-header">
+        <h1>People</h1>
+        <input 
+          type="search" 
+          placeholder="Search people by name or email..." 
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearch($event)"
+          class="search-input" 
+        />
+      </div>
+      
+      <div class="people-content">
+        <app-loader *ngIf="isLoading" [isLoading]="true" message="Loading people..."></app-loader>
+        
+        <div *ngIf="!isLoading && filteredUsers.length > 0" class="people-list">
+          <div class="user-card" *ngFor="let user of filteredUsers" (click)="openChat(user)">
+            <div class="user-avatar">
+              <div class="avatar-placeholder">{{ (user.username || 'U').charAt(0).toUpperCase() }}</div>
+            </div>
+            <div class="user-info">
+              <h3 class="user-name">{{ user.username || 'Unknown User' }}</h3>
+              <p class="user-email">{{ user.email }}</p>
+              <p class="user-bio" *ngIf="user.bio">{{ user.bio }}</p>
+              <div class="user-status">
+                <span class="status-indicator" [class.online]="isUserOnline(user.publicId)"></span>
+                {{ isUserOnline(user.publicId) ? 'Online' : 'Offline' }}
+              </div>
+            </div>
+            <button class="action-btn" (click)="openChat(user); $event.stopPropagation()">
+              Message
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="!isLoading && filteredUsers.length === 0 && searchQuery" class="no-results">
+          <p>No users found matching "{{ searchQuery }}"</p>
+        </div>
+
+        <div *ngIf="!isLoading && filteredUsers.length === 0 && !searchQuery" class="no-users">
+          <p>No users available</p>
+        </div>
+      </div>
+    </div>
+  

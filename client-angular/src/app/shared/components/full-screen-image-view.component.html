@@ -1,0 +1,7 @@
+    <div class="fullscreen-overlay" *ngIf="isVisible" (click)="close()">
+      <div class="image-container">
+        <img [src]="imageUrl" [alt]="imageAlt" class="fullscreen-image" />
+        <button class="close-button" (click)="close()">×</button>
+      </div>
+    </div>
+  

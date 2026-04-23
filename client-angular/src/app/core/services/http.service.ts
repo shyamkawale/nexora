@@ -1,0 +1,144 @@
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpErrorResponse,
+  HttpRequest,
+  HttpEvent
+} from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { isPlatformBrowser } from '@angular/common';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class HttpService {
+  private baseUrl = environment.serverUrl;
+  private isBrowser: boolean;
+
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  private getHeaders(): HttpHeaders {
+    const token = this.getAuthToken();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    if (token) {
+      console.log('🔐 Token found, adding Authorization header');
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    } else {
+      console.warn('⚠️ No auth token found!');
+    }
+
+    return headers;
+  }
+
+  private getAuthToken(): string | null {
+    if (!this.isBrowser) {
+      console.log('⚠️ Not in browser context, no token available');
+      return null;
+    }
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.warn('⚠️ No token in localStorage');
+    }
+    return token || null;
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    console.error('❌ HTTP Error:', {
+      status: error.status,
+      statusText: error.statusText,
+      message: error.message,
+      url: error.url,
+      errorBody: error.error
+    });
+
+    if (error.status === 401) {
+      // Don't trigger logout for auth endpoints (login/signup)
+      // 401 on /auth/* means "invalid credentials", not "session expired"
+      const isAuthEndpoint = error.url?.includes('/api/v1/auth/');
+      
+      if (this.isBrowser && !isAuthEndpoint) {
+        console.log('🔄 Clearing token and redirecting to signin');
+        localStorage.removeItem('authToken');
+        window.location.href = '/auth/signin';
+      }
+    } else if (error.status === 403) {
+      console.error('🚫 Access Forbidden - check permissions or CORS');
+    } else if (error.status === 307) {
+      if (this.isBrowser) {
+        window.location.href = error.headers.get('Location') || '/';
+      }
+    }
+
+    return throwError(() => ({
+      status: error.status,
+      message: error.error?.message || error.message,
+      error: error.error
+    }));
+  }
+
+  get<T>(endpoint: string): Observable<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const headers = this.getHeaders();
+    console.log('📡 GET:', url, 'Headers:', headers.keys());
+    return this.http.get<T>(url, { headers }).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  post<T>(endpoint: string, data: any): Observable<T> {
+    return this.http.post<T>(
+      `${this.baseUrl}${endpoint}`,
+      data,
+      { headers: this.getHeaders() }
+    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  put<T>(endpoint: string, data: any): Observable<T> {
+    return this.http.put<T>(
+      `${this.baseUrl}${endpoint}`,
+      data,
+      { headers: this.getHeaders() }
+    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  patch<T>(endpoint: string, data: any): Observable<T> {
+    return this.http.patch<T>(
+      `${this.baseUrl}${endpoint}`,
+      data,
+      { headers: this.getHeaders() }
+    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  delete<T>(endpoint: string): Observable<T> {
+    return this.http.delete<T>(
+      `${this.baseUrl}${endpoint}`,
+      { headers: this.getHeaders() }
+    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
+  postFormData<T>(endpoint: string, formData: FormData): Observable<T> {
+    let headers = new HttpHeaders();
+
+    if (this.isBrowser) {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        headers = headers.set('Authorization', `Bearer ${token}`);
+      }
+    }
+
+    return this.http.post<T>(
+      `${this.baseUrl}${endpoint}`,
+      formData,
+      { headers }
+    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+}

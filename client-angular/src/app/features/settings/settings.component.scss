@@ -1,0 +1,48 @@
+    .settings-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .settings-header h1 {
+      margin: 0 0 2rem 0;
+      color: #333;
+    }
+
+    .settings-content {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .settings-menu {
+      display: flex;
+      flex-direction: column;
+      width: 200px;
+    }
+
+    .menu-item {
+      padding: 1rem;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      color: #666;
+      border-left: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .menu-item:hover,
+    .menu-item.active {
+      background: #f5f5f5;
+      color: #333;
+      border-left-color: #667eea;
+    }
+
+    .settings-panel {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  
