@@ -3,17 +3,25 @@ spring:
     name: nexora-be
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/svk-db?currentSchema=nexora_db}
-    username: ${DB_USERNAME:svk}
-    password: ${DB_PASSWORD:svk}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/nexora}
+    username: ${DB_USERNAME:dbuser}
+    password: ${DB_PASSWORD:dbpass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_HIKARI_MAXIMUM_POOL_SIZE:10}
+      minimum-idle: ${DB_HIKARI_MINIMUM_IDLE:2}
+      connection-timeout: ${DB_HIKARI_CONNECTION_TIMEOUT:20000}
+      idle-timeout: ${DB_HIKARI_IDLE_TIMEOUT:300000}
+      max-lifetime: ${DB_HIKARI_MAX_LIFETIME:1200000}
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:create}
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 
   data:
     redis:
@@ -21,19 +29,19 @@ spring:
       port: ${REDIS_PORT:6379}
 
 jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}
+  secret: ${JWT_SECRET:dev-jwt-secret-key-minimum-256-bits-recommended}
+  expiration: 86400000
 
 aws:
   s3:
-    access-key: ${AWS_ACCESS_KEY}
-    secret-key: ${AWS_SECRET_KEY}
+    access-key: ${AWS_ACCESS_KEY:dev-access-key}
+    secret-key: ${AWS_SECRET_KEY:dev-secret-key}
     region: ${AWS_REGION:ap-south-1}
     bucket-name: ${AWS_BUCKET_NAME}
-    presigned-url-expiration-minutes: ${AWS_PRESIGNED_EXPIRATION:15}
-    max-file-size-mb: ${AWS_MAX_FILE_SIZE:50}
+    presigned-url-expiration-minutes: 15
+    max-file-size-mb: 50
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
   servlet:
     context-path: /
