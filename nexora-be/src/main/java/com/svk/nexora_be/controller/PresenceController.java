@@ -43,7 +43,6 @@ public class PresenceController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ Error fetching online users: {}", e.getMessage());
             Map<String, Object> error = new HashMap<>();
             error.put("error", "Failed to fetch online users");
             return ResponseEntity.status(500).body(error);
@@ -64,7 +63,6 @@ public class PresenceController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ Error checking user online status: {}", e.getMessage());
             Map<String, Object> error = new HashMap<>();
             error.put("error", "Failed to check user status");
             return ResponseEntity.status(500).body(error);

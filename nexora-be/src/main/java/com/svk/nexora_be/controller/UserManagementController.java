@@ -28,12 +28,10 @@ public class UserManagementController {
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         try {
-            log.info("👨‍💼 Fetching all users - page: {}, size: {}", page, size);
             org.springframework.data.domain.PageRequest pageable = org.springframework.data.domain.PageRequest.of(page, size);
             List<UserResponse> userResponses = userService.getAllUsers(pageable);
             return ResponseEntity.ok(userResponses);
         } catch (Exception e) {
-            log.error("❌ Error fetching users: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -44,14 +42,12 @@ public class UserManagementController {
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable String userId) {
         try {
-            log.info("👤 Fetching user: {}", userId);
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok(UserResponse.fromUser(user));
         } catch (Exception e) {
-            log.error("❌ Error fetching user: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -62,7 +58,6 @@ public class UserManagementController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable String userId) {
         try {
-            log.info("🗑️  Deleting user: {}", userId);
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
                 return ResponseEntity.notFound().build();
@@ -74,7 +69,6 @@ public class UserManagementController {
             response.put("success", true);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ Error deleting user: {}", e.getMessage());
             Map<String, Object> error = new HashMap<>();
             error.put("message", "Failed to delete user: " + e.getMessage());
             error.put("success", false);
@@ -88,7 +82,6 @@ public class UserManagementController {
     @PutMapping("/{userId}/deactivate")
     public ResponseEntity<Map<String, Object>> deactivateUser(@PathVariable String userId) {
         try {
-            log.info("🔒 Deactivating user: {}", userId);
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
                 return ResponseEntity.notFound().build();
@@ -101,7 +94,6 @@ public class UserManagementController {
             response.put("success", true);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ Error deactivating user: {}", e.getMessage());
             Map<String, Object> error = new HashMap<>();
             error.put("message", "Failed to deactivate user: " + e.getMessage());
             error.put("success", false);
@@ -115,7 +107,6 @@ public class UserManagementController {
     @PutMapping("/{userId}/activate")
     public ResponseEntity<Map<String, Object>> activateUser(@PathVariable String userId) {
         try {
-            log.info("🔓 Activating user: {}", userId);
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
                 return ResponseEntity.notFound().build();
@@ -128,7 +119,6 @@ public class UserManagementController {
             response.put("success", true);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ Error activating user: {}", e.getMessage());
             Map<String, Object> error = new HashMap<>();
             error.put("message", "Failed to activate user: " + e.getMessage());
             error.put("success", false);
