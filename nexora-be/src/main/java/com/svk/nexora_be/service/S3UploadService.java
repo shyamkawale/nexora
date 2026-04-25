@@ -23,7 +23,7 @@ import java.util.UUID;
 @Slf4j
 public class S3UploadService {
     private final S3Properties s3Properties;
-    private final S3Client s3Client;
+    // private final S3Client s3Client;
 
     /**
      * Generate presigned URL for file upload
