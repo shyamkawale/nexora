@@ -2,8 +2,11 @@ package com.svk.nexora_be;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
+
 import io.github.cdimascio.dotenv.Dotenv;
 
+@EnableCaching
 @SpringBootApplication
 public class NexoraBeApplication {
 
