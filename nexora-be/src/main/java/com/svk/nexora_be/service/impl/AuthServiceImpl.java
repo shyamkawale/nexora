@@ -5,7 +5,6 @@ import com.svk.nexora_be.entity.User;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.AuthService;
 import lombok.AllArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
 //    @Override
 //    public AuthResponse login(LoginRequest request) throws Exception {
