@@ -45,7 +45,6 @@ public class RedisConfig {
         RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(keyPair)
                 .serializeValuesWith(valuePair)
-                // default TTL for caches (adjust as needed)
                 .entryTtl(Duration.ofHours(1));
 
         return RedisCacheManager.builder(connectionFactory)
