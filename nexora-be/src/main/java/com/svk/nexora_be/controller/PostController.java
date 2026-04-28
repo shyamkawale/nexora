@@ -2,6 +2,7 @@ package com.svk.nexora_be.controller;
 
 import com.svk.nexora_be.dto.request.CreatePostRequest;
 import com.svk.nexora_be.dto.response.PostResponse;
+import com.svk.nexora_be.model.ApiResponse;
 import com.svk.nexora_be.service.PostService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,55 +24,60 @@ public class PostController {
     private final JwtUtil jwtUtil;
 
     @PostMapping
-    public ResponseEntity<PostResponse> createPost(@RequestBody CreatePostRequest request) {
+    public ResponseEntity<ApiResponse<PostResponse>> createPost(@RequestBody CreatePostRequest request) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         PostResponse post = postService.createPost(userId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(post);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(post, "Post created"));
     }
 
     @GetMapping
-    public ResponseEntity<Page<PostResponse>> getAllPosts(
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         Pageable pageable = PageRequest.of(page, size);
         Page<PostResponse> posts = postService.getAllPosts(userId, pageable);
-        return ResponseEntity.ok(posts);
+        return ResponseEntity.ok(ApiResponse.success(posts, "Posts fetched"));
     }
 
     @GetMapping("/{postId}")
-    public ResponseEntity<PostResponse> getPost(@PathVariable String postId) {
+    public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable String postId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         PostResponse post = postService.getPost(postId, userId);
-        return ResponseEntity.ok(post);
+        return ResponseEntity.ok(ApiResponse.success(post, "Post fetched"));
     }
 
     @GetMapping("/user/{userPublicId}")
-    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable String userPublicId) {
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getUserPosts(@PathVariable String userPublicId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         List<PostResponse> posts = postService.getUserPosts(userPublicId, userId);
-        return ResponseEntity.ok(posts);
+        return ResponseEntity.ok(ApiResponse.success(posts, "User posts fetched"));
     }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<Void> deletePost(@PathVariable String postId) {
+    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable String postId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         postService.deletePost(postId, userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "Post deleted"));
     }
 }
