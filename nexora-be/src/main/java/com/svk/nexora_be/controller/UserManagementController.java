@@ -2,16 +2,16 @@ package com.svk.nexora_be.controller;
 
 import com.svk.nexora_be.dto.response.UserResponse;
 import com.svk.nexora_be.entity.User;
+import com.svk.nexora_be.model.ApiResponse;
 import com.svk.nexora_be.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin/users")
@@ -26,13 +26,15 @@ public class UserManagementController {
      * Get all users (ADMIN only)
      */
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         try {
             org.springframework.data.domain.PageRequest pageable = org.springframework.data.domain.PageRequest.of(page, size);
             List<UserResponse> userResponses = userService.getAllUsers(pageable);
-            return ResponseEntity.ok(userResponses);
+            return ResponseEntity.ok(ApiResponse.success(userResponses, "Users fetched"));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            log.error("Error fetching users", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error"));
         }
     }
 
@@ -40,15 +42,18 @@ public class UserManagementController {
      * Get user by ID (ADMIN only)
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable String userId) {
         try {
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), "User not found"));
             }
-            return ResponseEntity.ok(UserResponse.fromUser(user));
+            return ResponseEntity.ok(ApiResponse.success(UserResponse.fromUser(user), "User fetched"));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            log.error("Error fetching user by id", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error"));
         }
     }
 
@@ -56,23 +61,19 @@ public class UserManagementController {
      * Delete user (ADMIN only)
      */
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String userId) {
         try {
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), "User not found"));
             }
             userService.deleteUser(userId);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "User deleted successfully");
-            response.put("success", true);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(null, "User deleted successfully"));
         } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("message", "Failed to delete user: " + e.getMessage());
-            error.put("success", false);
-            return ResponseEntity.internalServerError().body(error);
+            log.error("Failed to delete user", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to delete user: " + e.getMessage()));
         }
     }
 
@@ -80,24 +81,20 @@ public class UserManagementController {
      * Deactivate user (ADMIN only)
      */
     @PutMapping("/{userId}/deactivate")
-    public ResponseEntity<Map<String, Object>> deactivateUser(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<Void>> deactivateUser(@PathVariable String userId) {
         try {
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), "User not found"));
             }
             user.setIsActive(false);
             userService.updateUser(user);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "User deactivated successfully");
-            response.put("success", true);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(null, "User deactivated successfully"));
         } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("message", "Failed to deactivate user: " + e.getMessage());
-            error.put("success", false);
-            return ResponseEntity.internalServerError().body(error);
+            log.error("Failed to deactivate user", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to deactivate user: " + e.getMessage()));
         }
     }
 
@@ -105,24 +102,20 @@ public class UserManagementController {
      * Activate user (ADMIN only)
      */
     @PutMapping("/{userId}/activate")
-    public ResponseEntity<Map<String, Object>> activateUser(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable String userId) {
         try {
             User user = userService.getUserByPublicId(userId);
             if (user == null) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), "User not found"));
             }
             user.setIsActive(true);
             userService.updateUser(user);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "User activated successfully");
-            response.put("success", true);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(null, "User activated successfully"));
         } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("message", "Failed to activate user: " + e.getMessage());
-            error.put("success", false);
-            return ResponseEntity.internalServerError().body(error);
+            log.error("Failed to activate user", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to activate user: " + e.getMessage()));
         }
     }
 }
