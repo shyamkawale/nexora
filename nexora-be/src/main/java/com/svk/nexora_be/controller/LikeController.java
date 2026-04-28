@@ -1,13 +1,13 @@
 package com.svk.nexora_be.controller;
 
+import com.svk.nexora_be.dto.response.LikeResponse;
+import com.svk.nexora_be.model.ApiResponse;
 import com.svk.nexora_be.service.LikeService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.svk.nexora_be.security.JwtUtil;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/likes")
@@ -19,71 +19,77 @@ public class LikeController {
 
     // Post Likes
     @PostMapping("/posts/{postId}")
-    public ResponseEntity<Map<String, Object>> likePost(@PathVariable String postId) {
+    public ResponseEntity<ApiResponse<LikeResponse>> likePost(@PathVariable String postId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         likeService.likePost(postId, userId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("liked", true);
-        response.put("likeCount", likeService.getPostLikeCount(postId));
-        return ResponseEntity.ok(response);
+        LikeResponse response = LikeResponse.builder()
+                .liked(true)
+                .likeCount(likeService.getPostLikeCount(postId))
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(response, "Post liked"));
     }
 
     @DeleteMapping("/posts/{postId}")
-    public ResponseEntity<Map<String, Object>> unlikePost(@PathVariable String postId) {
+    public ResponseEntity<ApiResponse<LikeResponse>> unlikePost(@PathVariable String postId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         likeService.unlikePost(postId, userId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("liked", false);
-        response.put("likeCount", likeService.getPostLikeCount(postId));
-        return ResponseEntity.ok(response);
+        LikeResponse response = LikeResponse.builder()
+                .liked(false)
+                .likeCount(likeService.getPostLikeCount(postId))
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(response, "Post unliked"));
     }
 
     @GetMapping("/posts/{postId}/count")
-    public ResponseEntity<Map<String, Object>> getPostLikeCount(@PathVariable String postId) {
+    public ResponseEntity<ApiResponse<LikeResponse>> getPostLikeCount(@PathVariable String postId) {
         long count = likeService.getPostLikeCount(postId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("likeCount", count);
-        return ResponseEntity.ok(response);
+        LikeResponse response = LikeResponse.builder().likeCount(count).build();
+        return ResponseEntity.ok(ApiResponse.success(response, "Like count fetched"));
     }
 
     // Comment Likes
     @PostMapping("/comments/{commentId}")
-    public ResponseEntity<Map<String, Object>> likeComment(@PathVariable String commentId) {
+    public ResponseEntity<ApiResponse<LikeResponse>> likeComment(@PathVariable String commentId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         likeService.likeComment(commentId, userId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("liked", true);
-        response.put("likeCount", likeService.getCommentLikeCount(commentId));
-        return ResponseEntity.ok(response);
+        LikeResponse response = LikeResponse.builder()
+                .liked(true)
+                .likeCount(likeService.getCommentLikeCount(commentId))
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(response, "Comment liked"));
     }
 
     @DeleteMapping("/comments/{commentId}")
-    public ResponseEntity<Map<String, Object>> unlikeComment(@PathVariable String commentId) {
+    public ResponseEntity<ApiResponse<LikeResponse>> unlikeComment(@PathVariable String commentId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         likeService.unlikeComment(commentId, userId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("liked", false);
-        response.put("likeCount", likeService.getCommentLikeCount(commentId));
-        return ResponseEntity.ok(response);
+        LikeResponse response = LikeResponse.builder()
+                .liked(false)
+                .likeCount(likeService.getCommentLikeCount(commentId))
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(response, "Comment unliked"));
     }
 
     @GetMapping("/comments/{commentId}/count")
-    public ResponseEntity<Map<String, Object>> getCommentLikeCount(@PathVariable String commentId) {
+    public ResponseEntity<ApiResponse<LikeResponse>> getCommentLikeCount(@PathVariable String commentId) {
         long count = likeService.getCommentLikeCount(commentId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("likeCount", count);
-        return ResponseEntity.ok(response);
+        LikeResponse response = LikeResponse.builder().likeCount(count).build();
+        return ResponseEntity.ok(ApiResponse.success(response, "Like count fetched"));
     }
 }

@@ -145,15 +145,6 @@ ng test
 
 ---
 
-## Deployment notes
-
-- Build backend: `mvn clean package` and deploy the produced jar.
-- Build frontend: `ng build --configuration production` and serve the static `dist/` assets (or use SSR server for server-side rendering).
-- Recommended production stack: PostgreSQL (managed), Redis (optional), S3 for media, and a process manager (systemd / container orchestrator).
-- Consider adding a `docker-compose.yml` with Postgres + Redis + backend + frontend for local full-stack testing.
-
----
-
 ## Contributing
 
 We welcome contributions — please follow the standard GitHub flow:

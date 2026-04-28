@@ -2,6 +2,7 @@ package com.svk.nexora_be.controller;
 
 import com.svk.nexora_be.dto.request.CreateCommentRequest;
 import com.svk.nexora_be.dto.response.CommentResponse;
+import com.svk.nexora_be.model.ApiResponse;
 import com.svk.nexora_be.security.JwtUtil;
 import com.svk.nexora_be.service.CommentService;
 import lombok.AllArgsConstructor;
@@ -21,46 +22,50 @@ public class CommentController {
     private final JwtUtil jwtUtil;
 
     @PostMapping
-    public ResponseEntity<CommentResponse> createComment(@RequestBody CreateCommentRequest request) {
+    public ResponseEntity<ApiResponse<CommentResponse>> createComment(@RequestBody CreateCommentRequest request) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         CommentResponse comment = commentService.createComment(userId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(comment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(comment, "Comment created"));
     }
 
     @GetMapping("/{commentId}")
-    public ResponseEntity<CommentResponse> getComment(@PathVariable String commentId) {
+    public ResponseEntity<ApiResponse<CommentResponse>> getComment(@PathVariable String commentId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         CommentResponse comment = commentService.getComment(commentId, userId);
-        return ResponseEntity.ok(comment);
+        return ResponseEntity.ok(ApiResponse.success(comment, "Comment fetched"));
     }
 
     @GetMapping("/post/{postId}")
-    public ResponseEntity<Page<CommentResponse>> getPostComments(
+    public ResponseEntity<ApiResponse<Page<CommentResponse>>> getPostComments(
             @PathVariable String postId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         Pageable pageable = PageRequest.of(page, size);
         Page<CommentResponse> comments = commentService.getPostComments(postId, userId, pageable);
-        return ResponseEntity.ok(comments);
+        return ResponseEntity.ok(ApiResponse.success(comments, "Comments fetched"));
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable String commentId) {
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable String commentId) {
         String userId = jwtUtil.getCurrentUserId();
         if (userId == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
         commentService.deleteComment(commentId, userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null, "Comment deleted"));
     }
 }

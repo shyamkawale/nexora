@@ -2,6 +2,7 @@ package com.svk.nexora_be.controller;
 
 import com.svk.nexora_be.dto.request.SignupRequest;
 import com.svk.nexora_be.entity.User;
+import com.svk.nexora_be.model.ApiResponse;
 import com.svk.nexora_be.service.AuthService;
 import com.svk.nexora_be.service.PresenceService;
 import com.svk.nexora_be.service.UserService;
@@ -16,9 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.svk.nexora_be.security.JwtUtil;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -52,32 +50,25 @@ public class AuthController {
 //    }
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<ApiResponse<Void>> signup(@RequestBody SignupRequest request) {
         try {
             // Hash the password before saving
             request.setPassword(passwordEncoder.encode(request.getPassword()));
 
             authService.signup(request);
-            
-//            // Mark user as online after successful signup
-//            if (response.getToken() != null && response.getUser() != null) {
-//                User user = userService.getUserByPublicId(response.getUser().getPublicId());
-//                if (user != null) {
-//                    presenceService.markUserOnline(user);
-//                }
-//            }
-            
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.created(null, "User created"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
         try {
             String userId = jwtUtil.getCurrentUserId();
-            
+
             if (userId != null) {
                 User user = userService.getUserByPublicId(userId);
                 if (user != null) {
@@ -85,25 +76,19 @@ public class AuthController {
                 }
             }
 
-            // 🔥 Delete refresh token cookie
+            // Delete refresh token cookie
             Cookie cookie = new Cookie("refreshToken", null);
             cookie.setHttpOnly(true);
             cookie.setSecure(false); // true in production (HTTPS)
             cookie.setPath("/refresh-token");
-            cookie.setMaxAge(0); // 🔥 delete cookie
+            cookie.setMaxAge(0); // delete cookie
 
             response.addCookie(cookie);
-            
-            Map<String, Object> res = new HashMap<>();
-            res.put("message", "Logged out successfully");
-            res.put("success", true);
-            
-            return ResponseEntity.ok(res);
+
+            return ResponseEntity.ok(ApiResponse.success(null, "Logged out successfully"));
         } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("message", "Logout failed: " + e.getMessage());
-            error.put("success", false);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Logout failed: " + e.getMessage()));
         }
     }
 }

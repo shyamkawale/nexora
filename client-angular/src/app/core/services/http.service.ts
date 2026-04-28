@@ -7,7 +7,7 @@ import {
   HttpEvent
 } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -91,38 +91,53 @@ export class HttpService {
     const url = `${this.baseUrl}${endpoint}`;
     const headers = this.getHeaders();
     console.log('📡 GET:', url, 'Headers:', headers.keys());
-    return this.http.get<T>(url, { headers }).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+    return this.http.get<any>(url, { headers }).pipe(
+      map((res) => res?.data),
+      catchError((error: HttpErrorResponse) => this.handleError(error))
+    );
   }
 
   post<T>(endpoint: string, data: any): Observable<T> {
-    return this.http.post<T>(
+    return this.http.post<any>(
       `${this.baseUrl}${endpoint}`,
       data,
       { headers: this.getHeaders() }
-    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+    ).pipe(
+      map((res) => res?.data),
+      catchError((error: HttpErrorResponse) => this.handleError(error))
+    );
   }
 
   put<T>(endpoint: string, data: any): Observable<T> {
-    return this.http.put<T>(
+    return this.http.put<any>(
       `${this.baseUrl}${endpoint}`,
       data,
       { headers: this.getHeaders() }
-    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+    ).pipe(
+      map((res) => res?.data),
+      catchError((error: HttpErrorResponse) => this.handleError(error))
+    );
   }
 
   patch<T>(endpoint: string, data: any): Observable<T> {
-    return this.http.patch<T>(
+    return this.http.patch<any>(
       `${this.baseUrl}${endpoint}`,
       data,
       { headers: this.getHeaders() }
-    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+    ).pipe(
+      map((res) => res?.data),
+      catchError((error: HttpErrorResponse) => this.handleError(error))
+    );
   }
 
   delete<T>(endpoint: string): Observable<T> {
-    return this.http.delete<T>(
+    return this.http.delete<any>(
       `${this.baseUrl}${endpoint}`,
       { headers: this.getHeaders() }
-    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+    ).pipe(
+      map((res) => res?.data),
+      catchError((error: HttpErrorResponse) => this.handleError(error))
+    );
   }
 
   postFormData<T>(endpoint: string, formData: FormData): Observable<T> {
@@ -135,10 +150,13 @@ export class HttpService {
       }
     }
 
-    return this.http.post<T>(
+    return this.http.post<any>(
       `${this.baseUrl}${endpoint}`,
       formData,
       { headers }
-    ).pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+    ).pipe(
+      map((res) => res?.data),
+      catchError((error: HttpErrorResponse) => this.handleError(error))
+    );
   }
 }
