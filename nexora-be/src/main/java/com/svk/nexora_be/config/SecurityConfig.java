@@ -2,7 +2,6 @@ package com.svk.nexora_be.config;
 
 import com.svk.nexora_be.security.JwtAuthenticationProvider;
 import com.svk.nexora_be.security.JwtUtil;
-import com.svk.nexora_be.security.filter.JwtAuthenticationFilter;
 import com.svk.nexora_be.security.filter.JwtRefreshFilter;
 import com.svk.nexora_be.security.filter.JwtValidationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,8 +80,7 @@ public class SecurityConfig {
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager, jwtUtil), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(new JwtValidationFilter(authenticationManager), JwtAuthenticationFilter.class)
+                .addFilterBefore(new JwtValidationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(new JwtRefreshFilter(authenticationManager, jwtUtil), JwtValidationFilter.class);
 
         return http.build();
