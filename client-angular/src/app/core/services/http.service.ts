@@ -63,15 +63,7 @@ export class HttpService {
     });
 
     if (error.status === 401) {
-      // Don't trigger logout for auth endpoints (login/signup)
-      // 401 on /auth/* means "invalid credentials", not "session expired"
-      const isAuthEndpoint = error.url?.includes('/api/v1/auth/');
-      
-      if (this.isBrowser && !isAuthEndpoint) {
-        console.log('🔄 Clearing token and redirecting to signin');
-        localStorage.removeItem('authToken');
-        window.location.href = '/auth/signin';
-      }
+        console.log('🔄 401 received (not auth endpoint) — delegating handling to AuthInterceptor');
     } else if (error.status === 403) {
       console.error('🚫 Access Forbidden - check permissions or CORS');
     } else if (error.status === 307) {
@@ -92,7 +84,7 @@ export class HttpService {
     const headers = this.getHeaders();
     console.log('📡 GET:', url, 'Headers:', headers.keys());
     return this.http.get<any>(url, { headers }).pipe(
-      map((res) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
+      map((res: any) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }
