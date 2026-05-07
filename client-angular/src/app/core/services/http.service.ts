@@ -90,12 +90,7 @@ export class HttpService {
   }
 
   post<T>(endpoint: string, data: any): Observable<T> {
-    return this.http.post<any>(
-      `${this.baseUrl}${endpoint}`,
-      data,
-      { headers: this.getHeaders() }
-    ).pipe(
-      map((res) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
+      map((res: any) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }
@@ -117,7 +112,7 @@ export class HttpService {
       data,
       { headers: this.getHeaders() }
     ).pipe(
-      map((res) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
+      map((res: any) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }
@@ -147,7 +142,7 @@ export class HttpService {
       formData,
       { headers }
     ).pipe(
-      map((res) => res?.data),
+      map((res: any) => res?.data),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }
