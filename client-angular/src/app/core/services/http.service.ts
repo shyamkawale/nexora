@@ -110,7 +110,7 @@ export class HttpService {
       data,
       { headers: this.getHeaders() }
     ).pipe(
-      map((res) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
+      map((res: any) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }
@@ -131,7 +131,7 @@ export class HttpService {
       `${this.baseUrl}${endpoint}`,
       { headers: this.getHeaders() }
     ).pipe(
-      map((res) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
+      map((res: any) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }
