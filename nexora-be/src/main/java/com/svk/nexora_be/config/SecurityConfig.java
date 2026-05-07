@@ -20,10 +20,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -80,7 +80,7 @@ public class SecurityConfig {
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtValidationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new JwtValidationFilter(authenticationManager), CorsFilter.class)
                 .addFilterAfter(new JwtRefreshFilter(authenticationManager, jwtUtil), JwtValidationFilter.class);
 
         return http.build();
