@@ -90,6 +90,15 @@ export class HttpService {
   }
 
   post<T>(endpoint: string, data: any): Observable<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const isAuthEndpoint = endpoint.startsWith('/api/v1/auth');
+    const options: any = { headers: this.getHeaders() };
+    if (isAuthEndpoint) {
+      // Ensure cookies (HttpOnly refresh token) are accepted/set by browser for auth endpoints
+      options.withCredentials = true;
+    }
+
+    return this.http.post<any>(url, data, options).pipe(
       map((res: any) => (res && Object.prototype.hasOwnProperty.call(res, 'data') ? res.data : res)),
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
