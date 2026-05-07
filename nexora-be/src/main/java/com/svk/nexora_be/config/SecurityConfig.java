@@ -2,7 +2,6 @@ package com.svk.nexora_be.config;
 
 import com.svk.nexora_be.security.JwtAuthenticationProvider;
 import com.svk.nexora_be.security.JwtUtil;
-import com.svk.nexora_be.security.filter.JwtAuthenticationFilter;
 import com.svk.nexora_be.security.filter.JwtRefreshFilter;
 import com.svk.nexora_be.security.filter.JwtValidationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +20,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -81,8 +80,7 @@ public class SecurityConfig {
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager, jwtUtil), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(new JwtValidationFilter(authenticationManager), JwtAuthenticationFilter.class)
+                .addFilterAfter(new JwtValidationFilter(authenticationManager), CorsFilter.class)
                 .addFilterAfter(new JwtRefreshFilter(authenticationManager, jwtUtil), JwtValidationFilter.class);
 
         return http.build();
@@ -94,7 +92,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of("http://localhost:4200"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("*"));
+         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

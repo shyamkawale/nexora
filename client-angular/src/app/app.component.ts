@@ -1,11 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthService } from './core/services/auth.service';
 import { PresenceService } from './core/services/presence.service';
 import { WebSocketService } from './core/services/websocket.service';
-import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { Subject, map } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -16,7 +14,6 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ]
 })
 export class AppComponent implements OnInit, OnDestroy {

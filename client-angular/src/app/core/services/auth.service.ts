@@ -137,17 +137,6 @@ export class AuthService {
     this.clearAuth();
   }
 
-  refreshToken(): Observable<AuthResponse> {
-    return this.httpService.post<AuthResponse>('/api/v1/auth/refresh', {}).pipe(
-      map(response => {
-        if (this.isBrowser && response.token) {
-          localStorage.setItem('authToken', response.token);
-        }
-        return response;
-      })
-    );
-  }
-
   isAuthenticated(): boolean {
     return this.isAuthenticatedSubject.value;
   }

@@ -11,11 +11,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 public class JwtRefreshFilter extends OncePerRequestFilter {
 
@@ -30,30 +28,46 @@ public class JwtRefreshFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (!request.getServletPath().equals("/api/refresh-token")) {
+        if (!request.getServletPath().equals("/api/v1/auth/refresh-token")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String refreshToken = extractJwtFromRequest(request);
         if (refreshToken == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Refresh token not found");
             return;
         }
 
-        JwtAuthenticationToken authenticationToken = new JwtAuthenticationToken(refreshToken);
-        Authentication authResult = authenticationManager.authenticate(authenticationToken);
-        if (authResult.isAuthenticated()) {
-            User user = (User) authResult.getPrincipal();
-            List<String> roles = authResult.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .toList();
-            String jwtToken = jwtUtil.generateJwtToken(
-                    user,
-                    15
-            );
-            response.addHeader("Authorization", "Bearer " + jwtToken);
+        try {
+            JwtAuthenticationToken authenticationToken = new JwtAuthenticationToken(refreshToken);
+            Authentication authResult = authenticationManager.authenticate(authenticationToken);
+            if (authResult.isAuthenticated()) {
+                User user = (User) authResult.getPrincipal();
+                String jwtToken = jwtUtil.generateJwtToken(user, 15);
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.setHeader("Authorization", "Bearer " + jwtToken);
+                response.getWriter().write("{\"status\":200,\"message\":\"Token refreshed\"}");
+                response.getWriter().flush();
+                return;
+            } else {
+                writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
+                return;
+            }
+        } catch (Exception ex) {
+            writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid refresh token");
+            return;
         }
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"status\":" + status + ",\"message\":\"" + message + "\"}");
+        response.getWriter().flush();
     }
 
     private String extractJwtFromRequest(HttpServletRequest request) {
