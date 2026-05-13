@@ -38,6 +38,9 @@ public class NexoraBeApplication {
 			setPropertyIfExists(dotenv, "AWS_SECRET_KEY");
 			setPropertyIfExists(dotenv, "AWS_REGION");
 			setPropertyIfExists(dotenv, "AWS_BUCKET_NAME");
+
+			// OpenAI Configuration (Environment-specific)
+			setPropertyIfExists(dotenv, "OPENAI_API_KEY");
 			
 			System.out.println("✓ Environment variables loaded from .env file successfully");
 		} catch (Exception e) {
