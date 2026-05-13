@@ -41,6 +41,10 @@ aws:
     presigned-url-expiration-minutes: 15
     max-file-size-mb: 50
 
+openai:
+  api-key: ${OPENAI_API_KEY:dev-openai-api-key}
+  url: https://api.openai.com/v1/responses
+
 server:
   port: 8080
   servlet:
