@@ -93,6 +93,12 @@
 			<version>2.24.11</version>
 		</dependency>
 
+		<!-- WebClient Dependencies -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webclient</artifactId>
+		</dependency>
+
 		<!-- Swagger Dependencies-->
 		<dependency>
 			<groupId>org.springdoc</groupId>
