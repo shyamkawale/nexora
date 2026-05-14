@@ -4,3 +4,6 @@ export * from './search-user.component';
 export * from './error-message.component';
 export * from './vertical-loader.component';
 export * from './full-screen-image-view.component';
+export * from './chatbot/chatbot.component';
+export * from './chatbot/chatbot.service';
+export * from './chatbot/chatbot.models';
