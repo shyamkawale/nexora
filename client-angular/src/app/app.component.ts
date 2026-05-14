@@ -4,13 +4,14 @@ import { RouterModule, Router } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { PresenceService } from './core/services/presence.service';
 import { WebSocketService } from './core/services/websocket.service';
+import { ChatbotComponent } from './shared/components/chatbot/chatbot.component';
 import { Subject, map } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ChatbotComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   providers: [
