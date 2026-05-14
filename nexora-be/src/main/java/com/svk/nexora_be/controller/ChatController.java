@@ -1,6 +1,7 @@
 package com.svk.nexora_be.controller;
 
 import com.svk.nexora_be.dto.request.ChatRequest;
+import com.svk.nexora_be.dto.response.ChatResponse;
 import com.svk.nexora_be.service.OpenAIService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,10 +19,10 @@ public class ChatController {
     }
 
     @PostMapping
-    public ResponseEntity<String> chat(@RequestBody ChatRequest request) {
+    public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
 
-        String response = openAIService.ask(request.getMessage());
+        String answer = openAIService.ask(request.getMessage());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new ChatResponse(answer));
     }
 }
