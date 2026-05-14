@@ -35,6 +35,9 @@
         <main class="main-content">
           <router-outlet></router-outlet>
         </main>
+
+        <!-- Floating NEXORA AI Assistant (visible only when signed in) -->
+        <app-chatbot *ngIf="isAuthenticated$ | async"></app-chatbot>
       </ng-container>
     </div>
   
