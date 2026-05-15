@@ -7,6 +7,7 @@
 
   <!-- ===================== Floating Action Button ===================== -->
   <button
+    *ngIf="!isOpen || isMinimized"
     type="button"
     class="chatbot-fab"
     [class.chatbot-fab--active]="isOpen || isMinimized"
