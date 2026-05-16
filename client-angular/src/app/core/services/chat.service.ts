@@ -81,11 +81,12 @@ export class ChatService {
     return this.httpService.get<DirectMessageChat[]>('/api/v1/direct-messages/user/chats');
   }
 
-  sendDirectMessage(chatId: string, message: string): Observable<DirectMessageResponse> {
+  sendDirectMessage(chatId: string, message: string, containsMedia: boolean): Observable<DirectMessageResponse> {
     console.log('📤 Sending direct message to chat:', chatId);
     return this.httpService.post<DirectMessageResponse>('/api/v1/direct-messages', {
       chatId,
-      message
+      message,
+      containsMedia
     });
   }
 
