@@ -45,8 +45,4 @@ public class GroupChatMember {
     protected void onCreate() {
         joinedAt = LocalDateTime.now();
     }
-
-    public enum MemberRole {
-        ADMIN, MEMBER
-    }
 }

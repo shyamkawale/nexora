@@ -4,13 +4,13 @@ import com.svk.nexora_be.dto.request.GroupMessageRequest;
 import com.svk.nexora_be.dto.response.GroupMessageResponse;
 import com.svk.nexora_be.dto.response.UserResponse;
 import com.svk.nexora_be.entity.GroupChat;
-import com.svk.nexora_be.entity.GroupChatMember;
 import com.svk.nexora_be.entity.GroupMessage;
 import com.svk.nexora_be.entity.User;
+import com.svk.nexora_be.exception.NotFoundException;
 import com.svk.nexora_be.repository.GroupChatMemberRepository;
 import com.svk.nexora_be.repository.GroupChatRepository;
 import com.svk.nexora_be.repository.GroupMessageRepository;
-import com.svk.nexora_be.repository.UserRepository;
+import com.svk.nexora_be.service.ChatAccessGuard;
 import com.svk.nexora_be.service.GroupMessageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,38 +23,27 @@ public class GroupMessageServiceImpl implements GroupMessageService {
     private final GroupMessageRepository groupMessageRepository;
     private final GroupChatRepository groupChatRepository;
     private final GroupChatMemberRepository groupChatMemberRepository;
-    private final UserRepository userRepository;
+    private final ChatAccessGuard chatAccessGuard;
 
     public GroupMessageServiceImpl(GroupMessageRepository groupMessageRepository,
                                  GroupChatRepository groupChatRepository,
                                  GroupChatMemberRepository groupChatMemberRepository,
-                                 UserRepository userRepository) {
+                                 ChatAccessGuard chatAccessGuard) {
         this.groupMessageRepository = groupMessageRepository;
         this.groupChatRepository = groupChatRepository;
         this.groupChatMemberRepository = groupChatMemberRepository;
-        this.userRepository = userRepository;
+        this.chatAccessGuard = chatAccessGuard;
     }
 
     @Override
     public GroupMessageResponse sendMessage(String userId, GroupMessageRequest request) {
-        // Get sender
-        User sender = userRepository.findByPublicId(userId)
-                .orElseThrow(() -> new RuntimeException("Sender not found"));
+        User sender = chatAccessGuard.getUserOrThrow(userId);
 
-        // Get group chat
         GroupChat groupChat = groupChatRepository.findByPublicId(request.getChatId())
-                .orElseThrow(() -> new RuntimeException("Group chat not found"));
+                .orElseThrow(() -> new NotFoundException("Group chat not found: " + request.getChatId()));
 
-        // Verify user is member of group
-        GroupChatMember membership = groupChatMemberRepository
-                .findByGroupChatAndUser(groupChat, sender)
-                .orElseThrow(() -> new RuntimeException("User is not a member of this group"));
+        chatAccessGuard.verifyGroupMembership(sender.getId(), groupChat.getId());
 
-        if (!membership.getIsActive()) {
-            throw new RuntimeException("User membership is not active");
-        }
-
-        // Create and save message
         GroupMessage message = GroupMessage.builder()
                 .groupChat(groupChat)
                 .sender(sender)
@@ -69,9 +58,8 @@ public class GroupMessageServiceImpl implements GroupMessageService {
 
     @Override
     public Page<GroupMessageResponse> getGroupMessages(String groupChatPublicId, Pageable pageable) {
-        // Verify group exists
         groupChatRepository.findByPublicId(groupChatPublicId)
-                .orElseThrow(() -> new RuntimeException("Group chat not found"));
+                .orElseThrow(() -> new NotFoundException("Group chat not found: " + groupChatPublicId));
 
         return groupMessageRepository.findByGroupChatPublicIdOrderByCreatedAtDesc(groupChatPublicId, pageable)
                 .map(this::mapToResponse);
@@ -80,14 +68,14 @@ public class GroupMessageServiceImpl implements GroupMessageService {
     @Override
     public GroupMessage getMessageById(Long messageId) {
         return groupMessageRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("Message not found"));
+                .orElseThrow(() -> new NotFoundException("Message not found"));
     }
 
     private GroupMessageResponse mapToResponse(GroupMessage message) {
         return GroupMessageResponse.builder()
-                .publicId(message.getId().toString())
+                .publicId(message.getPublicId())
                 .message(message.getMessage())
-                .createdAt(java.sql.Timestamp.valueOf(message.getCreatedAt()).getTime())
+                .createdAt(message.getCreatedAt())
                 .sender(UserResponse.builder()
                         .publicId(message.getSender().getPublicId())
                         .username(message.getSender().getUsername())
