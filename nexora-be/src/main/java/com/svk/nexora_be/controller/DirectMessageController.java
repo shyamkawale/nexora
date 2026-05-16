@@ -1,16 +1,16 @@
 package com.svk.nexora_be.controller;
 
 import com.svk.nexora_be.dto.request.DirectMessageRequest;
+import com.svk.nexora_be.dto.response.DirectMessageChatResponse;
 import com.svk.nexora_be.dto.response.DirectMessageResponse;
-import com.svk.nexora_be.entity.DirectMessageChat;
 import com.svk.nexora_be.model.ApiResponse;
+import com.svk.nexora_be.service.ChatBroadcaster;
 import com.svk.nexora_be.service.DirectMessageService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import com.svk.nexora_be.security.JwtUtil;
 
@@ -22,23 +22,19 @@ import java.util.List;
 public class DirectMessageController {
 
     private final DirectMessageService directMessageService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatBroadcaster chatBroadcaster;
     private final JwtUtil jwtUtil;
 
     @GetMapping("/chats/{otherUserId}")
-    public ResponseEntity<ApiResponse<DirectMessageChat>> getOrCreateChat(@PathVariable String otherUserId) {
+    public ResponseEntity<ApiResponse<DirectMessageChatResponse>> getOrCreateChat(@PathVariable String otherUserId) {
         String currentUserId = jwtUtil.getCurrentUserId();
         if (currentUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
 
-        DirectMessageChat chat = directMessageService.getOrCreateChat(currentUserId, otherUserId);
-        if (chat != null) {
-            return ResponseEntity.ok(ApiResponse.success(chat, "Chat retrieved"));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), "Chat not found"));
+        DirectMessageChatResponse chat = directMessageService.getOrCreateChat(currentUserId, otherUserId);
+        return ResponseEntity.ok(ApiResponse.success(chat, "Chat retrieved"));
     }
 
     @GetMapping("/{chatId}")
@@ -56,14 +52,14 @@ public class DirectMessageController {
     }
 
     @GetMapping("/user/chats")
-    public ResponseEntity<ApiResponse<List<DirectMessageChat>>> getUserChats() {
+    public ResponseEntity<ApiResponse<List<DirectMessageChatResponse>>> getUserChats() {
         String currentUserId = jwtUtil.getCurrentUserId();
         if (currentUserId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         }
 
-        List<DirectMessageChat> chats = directMessageService.getUserChats(currentUserId);
+        List<DirectMessageChatResponse> chats = directMessageService.getUserChats(currentUserId);
         return ResponseEntity.ok(ApiResponse.success(chats, "Chats fetched"));
     }
 
@@ -78,13 +74,7 @@ public class DirectMessageController {
 
         DirectMessageResponse response = directMessageService.sendMessage(currentUserId, request);
 
-        if (response == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Failed to send message"));
-        }
-
-        // Broadcast message to WebSocket subscribers
-        String topicPath = "/topic/messages/" + request.getChatId();
-        messagingTemplate.convertAndSend(topicPath, response);
+        chatBroadcaster.broadcastDirectMessage(request.getChatId(), response);
 
         return ResponseEntity.ok(ApiResponse.success(response, "Message sent"));
     }

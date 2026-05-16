@@ -1,30 +1,25 @@
 package com.svk.nexora_be.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.svk.nexora_be.entity.base.BaseChat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "group_chats")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class GroupChat {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, unique = true, length = 36)
-    private String publicId;
-
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class GroupChat extends BaseChat {
     @Column(nullable = false, length = 255)
     private String groupName;
 
@@ -42,22 +37,4 @@ public class GroupChat {
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        publicId = UUID.randomUUID().toString();
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

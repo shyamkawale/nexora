@@ -5,6 +5,7 @@ import com.svk.nexora_be.dto.request.GroupMessageRequest;
 import com.svk.nexora_be.dto.response.GroupChatResponse;
 import com.svk.nexora_be.dto.response.GroupMessageResponse;
 import com.svk.nexora_be.model.ApiResponse;
+import com.svk.nexora_be.service.ChatBroadcaster;
 import com.svk.nexora_be.service.GroupChatService;
 import com.svk.nexora_be.service.GroupMessageService;
 import org.springframework.data.domain.Page;
@@ -12,7 +13,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import com.svk.nexora_be.security.JwtUtil;
 
@@ -23,16 +23,16 @@ import java.util.List;
 public class GroupChatController {
     private final GroupChatService groupChatService;
     private final GroupMessageService groupMessageService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatBroadcaster chatBroadcaster;
     private final JwtUtil jwtUtil;
 
     public GroupChatController(GroupChatService groupChatService,
                              GroupMessageService groupMessageService,
-                             SimpMessagingTemplate messagingTemplate,
+                             ChatBroadcaster chatBroadcaster,
                              JwtUtil jwtUtil) {
         this.groupChatService = groupChatService;
         this.groupMessageService = groupMessageService;
-        this.messagingTemplate = messagingTemplate;
+        this.chatBroadcaster = chatBroadcaster;
         this.jwtUtil = jwtUtil;
     }
 
@@ -75,9 +75,7 @@ public class GroupChatController {
         
         GroupMessageResponse response = groupMessageService.sendMessage(userId, request);
         
-        // Broadcast message to WebSocket topic
-        String topicPath = "/topic/group-messages/" + chatId;
-        messagingTemplate.convertAndSend(topicPath, response);
+        chatBroadcaster.broadcastGroupMessage(chatId, response);
         
         return ResponseEntity.ok(ApiResponse.success(response, "Message sent"));
     }

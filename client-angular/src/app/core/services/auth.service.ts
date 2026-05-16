@@ -113,6 +113,10 @@ export class AuthService {
     return this.httpService.post('/api/v1/auth/logout', {}).pipe(
       map(() => {
         this.clearAuth();
+        // Navigate to login after a short delay to ensure cleanup
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 500);
         return true;
       })
     );
@@ -121,15 +125,23 @@ export class AuthService {
   private clearAuth(): void {
     if (!this.isBrowser) return;
 
+    // Clear auth-specific items
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenType');
     localStorage.removeItem('expiresIn');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userRoles');
     localStorage.removeItem('appState');
+    
+    // Clear all cache on logout
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Reset state
     this.isAuthenticatedSubject.next(false);
     this.currentUserSubject.next(null);
     this.stateService.resetState();
+    console.log('✅ Auth cleared and all cache removed');
   }
 
   clearAuthLocally(): void {

@@ -1,50 +1,43 @@
-package com.svk.nexora_be.entity;
+package com.svk.nexora_be.entity.base;
 
+import com.svk.nexora_be.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import lombok.experimental.SuperBuilder;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "groups")
+@MappedSuperclass
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Group {
+@SuperBuilder
+public abstract class BaseMessage {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    protected Long id;
 
     @Column(nullable = false, unique = true, length = 36)
-    private String publicId;
-
-    @Column(nullable = false, length = 255)
-    private String name;
-
-    @Column(length = 1000)
-    private String description;
-
-    @Column(length = 255)
-    private String profilePicture;
+    protected String publicId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_id", nullable = false)
-    private User creator;
+    @JoinColumn(name = "sender_id", nullable = false)
+    protected User sender;
+
+    @Column(columnDefinition = "TEXT")
+    protected String message;
 
     @Column(nullable = false)
-    @Builder.Default
-    private Boolean isActive = true;
+    protected Boolean containsMedia = false;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    protected LocalDateTime createdAt;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    protected LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
