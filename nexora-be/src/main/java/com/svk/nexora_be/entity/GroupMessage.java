@@ -1,55 +1,24 @@
 package com.svk.nexora_be.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.svk.nexora_be.entity.base.BaseMessage;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "group_messages")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class GroupMessage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class GroupMessage extends BaseMessage {
     @ManyToOne
     @JoinColumn(nullable = false)
     @JsonIgnore
     private GroupChat groupChat;
-
-    @ManyToOne
-    @JoinColumn(nullable = false)
-    private User sender;
-
-    @Column(columnDefinition = "TEXT")
-    private String message;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean containsMedia = false;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }
