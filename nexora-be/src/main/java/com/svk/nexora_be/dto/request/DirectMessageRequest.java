@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class DirectMessageRequest {
     private String chatId;
     private String message;
+    private boolean containsMedia;
 }

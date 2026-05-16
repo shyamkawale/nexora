@@ -1,64 +1,27 @@
 package com.svk.nexora_be.entity;
 
+import com.svk.nexora_be.entity.base.BaseMessage;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "direct_messages")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class DirectMessage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, unique = true, length = 36)
-    private String publicId;
-
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class DirectMessage extends BaseMessage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_id", nullable = false)
     private DirectMessageChat chat;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id", nullable = false)
-    private User sender;
-
-    @Column(columnDefinition = "TEXT")
-    private String message;
-
     @Column(nullable = false)
     @Builder.Default
     private Boolean isRead = false;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean containsMedia = false;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (publicId == null) {
-            publicId = UUID.randomUUID().toString();
-        }
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }
