@@ -539,6 +539,31 @@ GET /api/v1/files/download-url?fileKey=uploads/file.jpg&download=false
 Authorization: Bearer <token>
 ```
 
+### AI Chatbot
+
+**Send Message to Chatbot (with Knowledge Base)**
+```
+POST /api/v1/chat
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "message": "How does presence tracking work?"
+}
+
+Response:
+{
+  "response": "Presence tracking shows whether users are online or offline in real-time. When a user logs in, they connect via WebSocket, and their online status is broadcast to all connected clients...",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+**How it works:**
+- Backend searches knowledge base for relevant documents
+- Matches question against 7 knowledge documents
+- Sends matching docs + question to OpenAI
+- Returns AI-generated response based only on knowledge base
+
 ### Admin
 
 **List All Users (Admin)**
@@ -800,6 +825,196 @@ Run with production profile:
 ```bash
 java -jar target/*.jar --spring.profiles.active=prod
 ```
+
+---
+
+## 🤖 AI Chatbot with Knowledge Base (RAG)
+
+### Overview
+
+The Nexora AI Chatbot uses **RAG (Retrieval Augmented Generation)** to provide accurate, context-aware answers about the platform. Instead of relying solely on general internet knowledge, it searches the knowledge base first and then provides answers based only on Nexora's documentation.
+
+### How It Works
+
+**Simple RAG Without Vector Database:**
+
+1. **User sends question** via `/api/v1/chat` endpoint
+2. **Backend searches** knowledge base for relevant documents (keyword-based)
+3. **Relevant documents** are included in the OpenAI prompt
+4. **OpenAI answers** ONLY from the provided documentation
+5. **Response sent** back to user with accurate, platform-specific information
+
+### Knowledge Base Structure
+
+Knowledge documents are stored in `src/main/resources/knowledge/` as markdown files:
+
+```
+knowledge/
+├── overview.md                    # Nexora platform overview
+├── presence-tracking.md           # How presence tracking works
+├── messaging.md                   # Direct messages & group chat
+├── social-features.md             # Posts, comments, likes
+├── file-management.md             # File upload & AWS S3
+├── authentication-security.md     # JWT, passwords, RBAC, CORS
+└── ai-chatbot.md                  # AI features & RAG documentation
+```
+
+### API Usage
+
+**Send Message to AI Chatbot**
+```
+POST /api/v1/chat
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "message": "How does presence tracking work?"
+}
+
+Response:
+{
+  "response": "Presence tracking shows whether users are online or offline in real-time...",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+### Example Conversations
+
+**Q1: Presence Tracking**
+```
+User: "How does presence tracking work?"
+
+AI: "Presence tracking shows whether users are online or offline in real-time. 
+When a user logs in, they connect via WebSocket, and their online status is 
+broadcast to all connected clients. When disconnected, the status changes to 
+offline with a last-seen timestamp."
+```
+
+**Q2: File Upload**
+```
+User: "What file types are supported?"
+
+AI: "Nexora supports: documents (PDF, Word, Excel), images (JPG, PNG, GIF), 
+videos (MP4, AVI), and archives (ZIP, RAR). Maximum file size is 50MB."
+```
+
+**Q3: Security**
+```
+User: "How is my password protected?"
+
+AI: "Your password is hashed using BCrypt with 10 iterations of salt. Only the hash 
+is stored in the database. When you log in, your password is compared to the stored 
+hash to verify identity."
+```
+
+### Services Architecture
+
+**KnowledgeBaseService** (Interface & Implementation)
+- Loads all knowledge documents at startup
+- Provides keyword-based search functionality
+- Ranks documents by relevance
+- Builds augmented context for AI prompts
+
+**OpenAIService** (Enhanced)
+- `ask(message)` - Simple question without context
+- `askWithContext(message, context)` - RAG query with knowledge base
+
+**ChatController**
+- Uses KnowledgeBaseService to find relevant docs
+- Calls OpenAIService with augmented context
+- Returns AI response to client
+
+### Implementation Details
+
+```java
+// Service method that builds augmented context
+@Override
+public String buildAugmentedContext(String query) {
+    List<String> relevantDocs = search(query, 3);
+    
+    if (relevantDocs.isEmpty()) {
+        return "";
+    }
+    
+    StringBuilder context = new StringBuilder();
+    context.append("Knowledge Base:\n");
+    for (String doc : relevantDocs) {
+        context.append(doc).append("\n---\n");
+    }
+    return context.toString();
+}
+
+// OpenAI prompt with knowledge base
+String prompt = String.format(
+    "You are the Nexora AI Assistant. Answer ONLY from the knowledge base:\n\n%s\n\nQuestion: %s",
+    knowledgeContext,
+    userMessage
+);
+```
+
+### Adding New Knowledge Documents
+
+To add new documentation to the knowledge base:
+
+1. **Create markdown file** in `src/main/resources/knowledge/`
+   ```
+   Example: user-management.md
+   ```
+
+2. **Follow standard format:**
+   - Clear headings (H2/H3)
+   - Practical examples
+   - API endpoint documentation
+   - Related links
+
+3. **Update KnowledgeBaseServiceImpl**
+   - Add document name to `KNOWLEDGE_DOCS` array
+   ```java
+   private static final String[] KNOWLEDGE_DOCS = {
+       "overview",
+       "presence-tracking",
+       "messaging",
+       "social-features",
+       "file-management",
+       "authentication-security",
+       "ai-chatbot",
+       "user-management"    // New document
+   };
+   ```
+
+4. **Restart backend**
+   - Knowledge base reloads from classpath
+   - New document immediately searchable
+
+### Performance & Scalability
+
+- **Load Time**: Documents loaded once at startup (~100ms)
+- **Search Time**: Keyword matching is O(n*m) where n=docs, m=keywords (~50ms)
+- **Total Latency**: ~500-1000ms including OpenAI API call
+- **Caching**: Knowledge documents cached in memory
+- **Concurrency**: Thread-safe map for concurrent access
+
+### Future Enhancements (Phase 3)
+
+- **Vector Database**: Use embeddings for semantic search
+- **Similarity Scoring**: Semantic similarity instead of keyword matching
+- **Multi-turn Context**: Remember conversation history
+- **User Feedback**: Learn from user corrections
+- **Analytics**: Track common questions and answer accuracy
+
+### Troubleshooting AI Chatbot
+
+**Problem**: AI returns "I don't know"
+- **Cause**: Question not in knowledge base
+- **Solution**: Add relevant documentation
+
+**Problem**: Irrelevant answers
+- **Cause**: Poor document relevance ranking
+- **Solution**: Update document keywords or add targeted doc
+
+**Problem**: Slow response
+- **Cause**: OpenAI API latency
+- **Solution**: Enable response caching or use faster model
 
 ---
 
