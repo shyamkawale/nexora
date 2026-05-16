@@ -109,7 +109,33 @@ export class WebSocketService {
       setTimeout(() => this.connect(), this.reconnectDelay);
     } else {
       console.error('❌ Max reconnect attempts reached');
+      this.connectionStatusSubject.next(false);
     }
+  }
+
+  /**
+   * Check if connection is alive and attempt to reconnect if dead
+   */
+  public checkConnectionHealth(): void {
+    if (!this.isBrowser) return;
+
+    if (this.client && !this.client.connected) {
+      console.warn('⚠️ WebSocket connection detected as dead, attempting reconnect...');
+      this.reconnectAttempts = 0; // Reset attempts for manual health check
+      this.connect();
+    }
+  }
+
+  /**
+   * Reset connection attempts and force reconnect
+   */
+  public forceReconnect(): void {
+    if (!this.isBrowser) return;
+
+    console.log('🔄 Forcing WebSocket reconnection...');
+    this.disconnect();
+    this.reconnectAttempts = 0;
+    setTimeout(() => this.connect(), 1000);
   }
 
   send(data: any): void {
