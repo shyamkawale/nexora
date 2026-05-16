@@ -163,6 +163,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.messages = [];
     this.showGroupDetails = false; // Close details panel when switching chats
     
+    // Check WebSocket health before subscribing
+    this.webSocketService.checkConnectionHealth();
+    
     // Determine chat type
     if ('user1' in chat) {
       // It's a direct message chat
@@ -608,12 +611,14 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.newMessage = '';
     this.previewFiles = [];
     this.uploadProgress = null;
+    var containsMedia = false;
 
     // Build message content with file URLs
     let finalMessage = message.trim();
     
     // Append file URLs to message (they will be displayed in UI)
     if (fileUrls.length > 0) {
+      containsMedia = true;
       const fileUrlsText = fileUrls.join('\n');
       finalMessage = finalMessage ? `${finalMessage}\n${fileUrlsText}` : fileUrlsText;
       console.log('📎 Attaching files to message:', fileUrls);
@@ -627,7 +632,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     // Call API based on chat type
     if (this.selectedChatType === 'direct') {
-      this.chatService.sendDirectMessage(chatId, finalMessage)
+      this.chatService.sendDirectMessage(chatId, finalMessage, containsMedia)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {

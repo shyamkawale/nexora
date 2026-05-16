@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  serverUrl: 'https://api.collabgen.com',
-  websocketUrl: 'wss://api.collabgen.com/ws'
+  serverUrl: 'https://api.nexora.com',
+  websocketUrl: 'wss://api.nexora.com/ws'
 };
