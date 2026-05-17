@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DirectMessageRequest {
-    private String chatId;
-    private String message;
-    private boolean containsMedia;
+public class PresignedUrlRequest {
+    private String fileName;
+    private String mimeType;
+    private long fileSizeBytes;
 }

@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GroupMessageRequest {
-    private String chatId;
-    private String message;
+public class ConfirmUploadRequest {
+    /**
+     * Public id of the {@code MediaFile} record returned alongside the presigned upload URL.
+     */
+    private String mediaFilePublicId;
 }

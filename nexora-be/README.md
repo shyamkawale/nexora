@@ -107,7 +107,7 @@ nexora-be/
 │   ├── controller/                      # REST API endpoints
 │   │   ├── AuthController.java          # Authentication endpoints
 │   │   ├── UserController.java          # User management endpoints
-│   │   ├── DirectMessageController.java # Direct message API
+│   │   ├── DirectChatController.java  # Direct chat API
 │   │   ├── GroupController.java         # Group management API
 │   │   ├── GroupChatController.java     # Group chat API
 │   │   ├── PostController.java          # Posts/feeds API
@@ -122,10 +122,10 @@ nexora-be/
 │   │   ├── impl/                        # Service implementations
 │   │   │   ├── AuthServiceImpl.java      # Authentication logic
 │   │   │   ├── UserServiceImpl.java      # User management logic
-│   │   │   ├── DirectMessageServiceImpl.java
+│   │   │   ├── DirectChatServiceImpl.java
 │   │   │   ├── GroupServiceImpl.java
 │   │   │   ├── GroupChatServiceImpl.java
-│   │   │   ├── GroupMessageServiceImpl.java
+│   │   │   ├── GroupChatMessageServiceImpl.java
 │   │   │   ├── PostServiceImpl.java
 │   │   │   ├── CommentServiceImpl.java
 │   │   │   ├── LikeServiceImpl.java
@@ -137,12 +137,12 @@ nexora-be/
 │   │
 │   ├── repository/                      # Data access layer
 │   │   ├── UserRepository.java
-│   │   ├── DirectMessageRepository.java
-│   │   ├── DirectMessageChatRepository.java
+│   │   ├── DirectChatMessageRepository.java
+│   │   ├── DirectChatRepository.java
 │   │   ├── GroupRepository.java
 │   │   ├── GroupChatRepository.java
 │   │   ├── GroupChatMemberRepository.java
-│   │   ├── GroupMessageRepository.java
+│   │   ├── GroupChatMessageRepository.java
 │   │   ├── PostRepository.java
 │   │   ├── CommentRepository.java
 │   │   ├── PostLikeRepository.java
@@ -151,13 +151,12 @@ nexora-be/
 │   │
 │   ├── entity/                          # JPA entities (database models)
 │   │   ├── User.java
-│   │   ├── DirectMessage.java
-│   │   ├── DirectMessageChat.java
+│   │   ├── DirectChatMessage.java
+│   │   ├── DirectChat.java
 │   │   ├── Group.java
 │   │   ├── GroupChat.java
 │   │   ├── GroupChatMember.java
 │   │   ├── GroupChatMessage.java
-│   │   ├── GroupMessage.java
 │   │   ├── Post.java
 │   │   ├── Comment.java
 │   │   ├── PostLike.java
@@ -522,7 +521,7 @@ Authorization: Bearer <token>
 
 **Get Presigned Upload URL**
 ```
-POST /api/v1/files/presigned-url
+POST /api/v1/files/presigned-upload-url
 Authorization: Bearer <token>
 Content-Type: application/json
 
@@ -535,7 +534,7 @@ Content-Type: application/json
 
 **Get Download URL**
 ```
-GET /api/v1/files/download-url?fileKey=uploads/file.jpg&download=false
+GET /api/v1/files/presigned-download-url?fileKey=uploads/file.jpg&download=false
 Authorization: Bearer <token>
 ```
 

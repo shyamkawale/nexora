@@ -2,10 +2,10 @@ package com.svk.nexora_be.service.impl;
 
 import com.svk.nexora_be.dto.request.CreateGroupChatRequest;
 import com.svk.nexora_be.dto.response.GroupChatResponse;
-import com.svk.nexora_be.dto.response.UserResponse;
 import com.svk.nexora_be.entity.GroupChat;
 import com.svk.nexora_be.entity.GroupChatMember;
-import com.svk.nexora_be.entity.MemberRole;
+import com.svk.nexora_be.enums.GroupChatMemberRole;
+import com.svk.nexora_be.exception.NotFoundException;
 import com.svk.nexora_be.entity.User;
 import com.svk.nexora_be.repository.GroupChatMemberRepository;
 import com.svk.nexora_be.repository.GroupChatRepository;
@@ -50,7 +50,7 @@ public class GroupChatServiceImpl implements GroupChatService {
         GroupChatMember creatorMember = GroupChatMember.builder()
                 .groupChat(groupChat)
                 .user(creator)
-                .role(MemberRole.ADMIN)
+                .role(GroupChatMemberRole.ADMIN)
                 .isActive(true)
                 .build();
         groupChatMemberRepository.save(creatorMember);
@@ -64,7 +64,7 @@ public class GroupChatServiceImpl implements GroupChatService {
                 GroupChatMember groupChatMember = GroupChatMember.builder()
                         .groupChat(groupChat)
                         .user(member)
-                        .role(MemberRole.MEMBER)
+                        .role(GroupChatMemberRole.MEMBER)
                         .isActive(true)
                         .build();
                 groupChatMemberRepository.save(groupChatMember);
@@ -72,7 +72,7 @@ public class GroupChatServiceImpl implements GroupChatService {
             }
         }
 
-        return mapToResponse(groupChat);
+        return GroupChatResponse.mapGroupChatToResponse(groupChat);
     }
 
     @Override
@@ -80,48 +80,14 @@ public class GroupChatServiceImpl implements GroupChatService {
         chatAccessGuard.getUserOrThrow(userPublicId);
         List<GroupChat> groupChats = groupChatRepository.findActiveGroupsForUser(userPublicId);
         return groupChats.stream()
-                .map(this::mapToResponse)
+                .map(GroupChatResponse::mapGroupChatToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public GroupChatResponse getGroupChatDetails(String groupChatPublicId) {
-        GroupChat groupChat = getGroupChatById(groupChatPublicId);
-        return mapToResponse(groupChat);
-    }
-
-    @Override
-    public GroupChat getGroupChatById(String groupChatPublicId) {
-        return groupChatRepository.findByPublicId(groupChatPublicId)
-                .orElseThrow(() -> new com.svk.nexora_be.exception.NotFoundException("Group chat not found: " + groupChatPublicId));
-    }
-
-    private GroupChatResponse mapToResponse(GroupChat groupChat) {
-        List<UserResponse> members = groupChat.getMembers().stream()
-                .filter(m -> m.getIsActive())
-                .map(m -> UserResponse.builder()
-                        .publicId(m.getUser().getPublicId())
-                        .username(m.getUser().getUsername())
-                        .email(m.getUser().getEmail())
-                        .profilePicture(m.getUser().getProfilePicture())
-                        .bio(m.getUser().getBio())
-                        .build())
-                .collect(Collectors.toList());
-
-        return GroupChatResponse.builder()
-                .publicId(groupChat.getPublicId())
-                .groupName(groupChat.getGroupName())
-                .description(groupChat.getDescription())
-                .createdBy(UserResponse.builder()
-                        .publicId(groupChat.getCreatedBy().getPublicId())
-                        .username(groupChat.getCreatedBy().getUsername())
-                        .email(groupChat.getCreatedBy().getEmail())
-                        .profilePicture(groupChat.getCreatedBy().getProfilePicture())
-                        .bio(groupChat.getCreatedBy().getBio())
-                        .build())
-                .members(members)
-                .createdAt(groupChat.getCreatedAt())
-                .isActive(groupChat.getIsActive())
-                .build();
+    public GroupChatResponse getGroupChatById(String groupChatPublicId) {
+        GroupChat groupChat = groupChatRepository.findByPublicId(groupChatPublicId)
+                .orElseThrow(() -> new NotFoundException("Group chat not found: " + groupChatPublicId));
+        return GroupChatResponse.mapGroupChatToResponse(groupChat);
     }
 }

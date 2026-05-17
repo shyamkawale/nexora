@@ -1,27 +1,24 @@
 package com.svk.nexora_be.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.svk.nexora_be.entity.base.BaseMessage;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.EqualsAndHashCode;
 
 @Entity
-@Table(name = "direct_messages")
+@Table(name = "group_chat_messages")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-public class DirectMessage extends BaseMessage {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_id", nullable = false)
-    private DirectMessageChat chat;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean isRead = false;
+public class GroupChatMessage extends BaseMessage {
+    @ManyToOne
+    @JoinColumn(nullable = false)
+    @JsonIgnore
+    private GroupChat groupChat;
 }

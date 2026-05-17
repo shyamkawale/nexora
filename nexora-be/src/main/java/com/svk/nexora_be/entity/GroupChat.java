@@ -37,4 +37,9 @@ public class GroupChat extends BaseChat {
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    public boolean hasParticipant(String currentUserId) {
+        return members.stream()
+                .anyMatch(member -> member.getUser().getPublicId().equals(currentUserId) && member.getIsActive());
+    }
 }
