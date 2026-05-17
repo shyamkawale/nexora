@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { LoaderComponent } from '../../shared/components/loader.component';
-import { ChatService, DirectMessageChat, DirectMessage, GroupChat, GroupMessage } from '../../core/services/chat.service';
+import { ChatService, DirectChat, DirectChatMessage, GroupChat, GroupChatMessage } from '../../core/services/chat.service';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PresenceService } from '../../core/services/presence.service';
@@ -22,15 +22,15 @@ import { takeUntil } from 'rxjs/operators';
 export class ChatComponent implements OnInit, OnDestroy {
   loadingChats = true;
   loadingMessages = false;
-  userChats: (DirectMessageChat | GroupChat)[] = [];
+  userChats: (DirectChat | GroupChat)[] = [];
   messages: any[] = [];
-  selectedChat: DirectMessageChat | GroupChat | null = null;
+  selectedChat: DirectChat | GroupChat | null = null;
   selectedChatId: string | null = null;
   selectedChatType: 'direct' | 'group' | null = null;
   newMessage = '';
   currentUserId: string | null = null;
   chatType: 'all' | 'direct' | 'group' = 'all'; // For tab filtering
-  directChats: DirectMessageChat[] = [];
+  directChats: DirectChat[] = [];
   groupChats: GroupChat[] = [];
   private destroy$ = new Subject<void>();
 
@@ -156,7 +156,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.updateChatList();
   }
 
-  selectChat(chat: DirectMessageChat | GroupChat): void {
+  selectChat(chat: DirectChat | GroupChat): void {
     console.log('📞 Selecting chat:', chat.publicId);
     this.selectedChat = chat;
     this.selectedChatId = chat.publicId;
@@ -645,7 +645,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           }
         });
     } else {
-      this.chatService.sendGroupMessage(chatId, finalMessage)
+      this.chatService.sendGroupMessage(chatId, finalMessage, containsMedia)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response: any) => {
@@ -715,7 +715,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     return !!idA && !!idB && idA === idB;
   }
 
-  private getOtherParticipant(chat: DirectMessageChat): any | null {
+  private getOtherParticipant(chat: DirectChat): any | null {
     if (!chat?.user1 || !chat?.user2) return null;
     if (!this.currentUserId) return chat.user1;
 
@@ -733,7 +733,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     return !!senderId && senderId === this.currentUserId;
   }
 
-  getChatName(chat: DirectMessageChat | GroupChat): string {
+  getChatName(chat: DirectChat | GroupChat): string {
     // Check if it's a group chat
     if ('groupName' in chat) {
       return chat.groupName || 'Group Chat';
@@ -745,7 +745,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     return otherUser.username || otherUser.email || 'Unknown User';
   }
 
-  getOtherUserName(chat: DirectMessageChat): string {
+  getOtherUserName(chat: DirectChat): string {
     if (!chat.user1 || !chat.user2) return 'Chat';
     
     // If current user is user1, show user2's name, otherwise show user1's name
@@ -756,10 +756,10 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
-  getOtherUserId(chat: DirectMessageChat | GroupChat): string | null {
+  getOtherUserId(chat: DirectChat | GroupChat): string | null {
     if (!this.isDirectChat(chat)) return null;
     
-    const directChat = chat as DirectMessageChat;
+    const directChat = chat as DirectChat;
     return this.resolveEntityId(this.getOtherParticipant(directChat));
   }
 
@@ -768,11 +768,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     return this.presenceService.isUserOnline(userId);
   }
 
-  isDirectChat(chat: DirectMessageChat | GroupChat): boolean {
+  isDirectChat(chat: DirectChat | GroupChat): boolean {
     return 'user1' in chat;
   }
 
-  isGroupChat(chat: DirectMessageChat | GroupChat): boolean {
+  isGroupChat(chat: DirectChat | GroupChat): boolean {
     return 'groupName' in chat;
   }
 

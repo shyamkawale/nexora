@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpService } from './http.service';
 
-export interface DirectMessageChat {
+export interface DirectChat {
   publicId: string;
   user1: any;
   user2: any;
@@ -10,9 +10,9 @@ export interface DirectMessageChat {
   updatedAt: string;
 }
 
-export interface DirectMessage {
+export interface DirectChatMessage {
   publicId: string;
-  chat: DirectMessageChat;
+  chat: DirectChat;
   sender: any;
   message: string;
   isRead: boolean;
@@ -21,7 +21,7 @@ export interface DirectMessage {
   updatedAt: string;
 }
 
-export interface DirectMessageResponse {
+export interface DirectChatMessageResponse {
   publicId: string;
   message: string;
   sender: any;
@@ -40,7 +40,7 @@ export interface GroupChat {
   createdAt: string;
 }
 
-export interface GroupMessage {
+export interface GroupChatMessage {
   publicId: string;
   groupChatId: string;
   sender: any;
@@ -48,7 +48,7 @@ export interface GroupMessage {
   createdAt: string;
 }
 
-export interface GroupChatMessage {
+export interface GroupChatMessageDetail {
   publicId: string;
   group: GroupChat;
   sender: any;
@@ -65,26 +65,25 @@ export interface GroupChatMessage {
 export class ChatService {
   constructor(private httpService: HttpService) {}
 
-  // Direct Messages
-  getOrCreateDirectChat(otherUserId: string): Observable<DirectMessageChat> {
+  // Direct Chats
+  getOrCreateDirectChat(otherUserId: string): Observable<DirectChat> {
     console.log('📞 Getting or creating direct chat with user:', otherUserId);
-    return this.httpService.get<DirectMessageChat>(`/api/v1/direct-messages/chats/${otherUserId}`);
+    return this.httpService.post<DirectChat>(`/api/v1/direct-chats/chats/${otherUserId}`, {});
   }
 
   getDirectMessages(chatId: string, page: number = 0, size: number = 20): Observable<any> {
-    console.log('💬 Fetching direct messages for chat:', chatId);
-    return this.httpService.get(`/api/v1/direct-messages/${chatId}?page=${page}&size=${size}`);
+    console.log('💬 Fetching direct chat messages for chat:', chatId);
+    return this.httpService.get(`/api/v1/direct-chats/${chatId}/messages?page=${page}&size=${size}`);
   }
 
-  getUserDirectChats(): Observable<DirectMessageChat[]> {
+  getUserDirectChats(): Observable<DirectChat[]> {
     console.log('📋 Fetching user direct chats');
-    return this.httpService.get<DirectMessageChat[]>('/api/v1/direct-messages/user/chats');
+    return this.httpService.get<DirectChat[]>('/api/v1/direct-chats');
   }
 
-  sendDirectMessage(chatId: string, message: string, containsMedia: boolean): Observable<DirectMessageResponse> {
-    console.log('📤 Sending direct message to chat:', chatId);
-    return this.httpService.post<DirectMessageResponse>('/api/v1/direct-messages', {
-      chatId,
+  sendDirectMessage(chatId: string, message: string, containsMedia: boolean): Observable<DirectChatMessageResponse> {
+    console.log('📤 Sending direct chat message to chat:', chatId);
+    return this.httpService.post<DirectChatMessageResponse>(`/api/v1/direct-chats/${chatId}/messages`, {
       message,
       containsMedia
     });
@@ -111,11 +110,12 @@ export class ChatService {
     return this.httpService.get(`/api/v1/group-chats/${groupChatId}/messages?page=${page}&size=${size}`);
   }
 
-  sendGroupMessage(chatId: string, message: string): Observable<GroupMessage> {
-    console.log('📤 Sending group message to chat:', chatId);
-    return this.httpService.post<GroupMessage>(`/api/v1/group-chats/${chatId}/messages`, {
+  sendGroupMessage(chatId: string, message: string, containsMedia: boolean): Observable<GroupChatMessage> {
+    console.log('📤 Sending group chat message to chat:', chatId);
+    return this.httpService.post<GroupChatMessage>(`/api/v1/group-chats/${chatId}/messages`, {
       chatId,
-      message
+      message,
+      containsMedia
     });
   }
 
