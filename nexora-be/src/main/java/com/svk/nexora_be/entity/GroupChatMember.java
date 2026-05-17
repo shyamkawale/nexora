@@ -1,6 +1,7 @@
 package com.svk.nexora_be.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.svk.nexora_be.enums.GroupChatMemberRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,7 +33,7 @@ public class GroupChatMember {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private MemberRole role = MemberRole.MEMBER;
+    private GroupChatMemberRole role = GroupChatMemberRole.MEMBER;
 
     @Column(nullable = false)
     @Builder.Default
