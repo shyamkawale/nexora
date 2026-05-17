@@ -1,5 +1,6 @@
 package com.svk.nexora_be.entity.base;
 
+import com.svk.nexora_be.entity.MediaFile;
 import com.svk.nexora_be.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -32,6 +33,10 @@ public abstract class BaseMessage {
 
     @Column(nullable = false)
     protected Boolean containsMedia = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "media_file_id")
+    protected MediaFile mediaFile;
 
     @Column(nullable = false, updatable = false)
     protected LocalDateTime createdAt;
