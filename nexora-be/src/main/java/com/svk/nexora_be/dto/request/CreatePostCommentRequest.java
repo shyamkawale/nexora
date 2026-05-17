@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateCommentRequest {
+public class CreatePostCommentRequest {
     private String postId;
     private String content;
 }
