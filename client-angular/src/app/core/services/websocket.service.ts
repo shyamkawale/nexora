@@ -1,7 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Client, Stomp } from '@stomp/stompjs';
+import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -138,20 +138,20 @@ export class WebSocketService {
     setTimeout(() => this.connect(), 1000);
   }
 
-  send(data: any): void {
-    if (!this.isBrowser) return;
+  // send(data: any): void {
+  //   if (!this.isBrowser) return;
     
-    if (!this.client || !this.client.connected) {
-      console.warn('⚠️ STOMP not connected, cannot send:', data.type || 'unknown');
-      return;
-    }
+  //   if (!this.client || !this.client.connected) {
+  //     console.warn('⚠️ STOMP not connected, cannot send:', data.type || 'unknown');
+  //     return;
+  //   }
 
-    console.log('📤 Sending STOMP message:', data.type || 'unknown');
-    this.client.publish({
-      destination: '/app/message',
-      body: JSON.stringify(data)
-    });
-  }
+  //   console.log('📤 Sending STOMP message:', data.type || 'unknown');
+  //   this.client.publish({
+  //     destination: '/app/message',
+  //     body: JSON.stringify(data)
+  //   });
+  // }
 
   subscribe(channel: string, callback: (data: any) => void): Observable<any> {
     if (!this.isBrowser) return this.message$;
