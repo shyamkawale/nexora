@@ -1,15 +1,14 @@
 package com.svk.nexora_be.controller;
 
 import com.svk.nexora_be.dto.request.CreateGroupChatRequest;
-import com.svk.nexora_be.dto.request.GroupMessageRequest;
+import com.svk.nexora_be.dto.request.GroupChatMessageRequest;
 import com.svk.nexora_be.dto.response.GroupChatResponse;
-import com.svk.nexora_be.dto.response.GroupMessageResponse;
+import com.svk.nexora_be.dto.response.GroupChatMessageResponse;
 import com.svk.nexora_be.model.ApiResponse;
 import com.svk.nexora_be.service.ChatBroadcaster;
 import com.svk.nexora_be.service.GroupChatService;
-import com.svk.nexora_be.service.GroupMessageService;
+import com.svk.nexora_be.service.GroupChatMessageService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.http.ResponseEntity;
@@ -22,16 +21,16 @@ import java.util.List;
 @RequestMapping("/api/v1/group-chats")
 public class GroupChatController {
     private final GroupChatService groupChatService;
-    private final GroupMessageService groupMessageService;
+    private final GroupChatMessageService groupChatMessageService;
     private final ChatBroadcaster chatBroadcaster;
     private final JwtUtil jwtUtil;
 
     public GroupChatController(GroupChatService groupChatService,
-                             GroupMessageService groupMessageService,
+                             GroupChatMessageService groupChatMessageService,
                              ChatBroadcaster chatBroadcaster,
                              JwtUtil jwtUtil) {
         this.groupChatService = groupChatService;
-        this.groupMessageService = groupMessageService;
+        this.groupChatMessageService = groupChatMessageService;
         this.chatBroadcaster = chatBroadcaster;
         this.jwtUtil = jwtUtil;
     }
@@ -39,6 +38,11 @@ public class GroupChatController {
     @PostMapping
     public ResponseEntity<ApiResponse<GroupChatResponse>> createGroupChat(@RequestBody CreateGroupChatRequest request) {
         String userId = jwtUtil.getCurrentUserId();
+
+        if(request.getMemberPublicIds() == null || request.getMemberPublicIds().size() < 2) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, "At least two members are required to create a group chat"));
+        }
+
         GroupChatResponse response = groupChatService.createGroupChat(userId, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Group chat created"));
     }
@@ -50,30 +54,29 @@ public class GroupChatController {
         return ResponseEntity.ok(ApiResponse.success(chats, "Group chats fetched"));
     }
 
-    @GetMapping("/{chatId}")
-    public ResponseEntity<ApiResponse<GroupChatResponse>> getGroupChatDetails(@PathVariable String chatId) {
-        GroupChatResponse response = groupChatService.getGroupChatDetails(chatId);
-        return ResponseEntity.ok(ApiResponse.success(response, "Group chat details"));
-    }
-
     @GetMapping("/{chatId}/messages")
-    public ResponseEntity<ApiResponse<Page<GroupMessageResponse>>> getGroupMessages(
+    public ResponseEntity<ApiResponse<Page<GroupChatMessageResponse>>> getGroupChatMessages(
             @PathVariable String chatId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<GroupMessageResponse> messages = groupMessageService.getGroupMessages(chatId, pageable);
+            Pageable pageable) {
+        String userId = jwtUtil.getCurrentUserId();
+        Page<GroupChatMessageResponse> messages = groupChatMessageService.getGroupChatMessages(userId, chatId, pageable);
         return ResponseEntity.ok(ApiResponse.success(messages, "Group messages fetched"));
     }
 
+    @GetMapping("/{chatId}")
+    public ResponseEntity<ApiResponse<GroupChatResponse>> getGroupChatDetails(@PathVariable String chatId) {
+        GroupChatResponse response = groupChatService.getGroupChatById(chatId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Group chat details fetched"));
+    }
+
     @PostMapping("/{chatId}/messages")
-    public ResponseEntity<ApiResponse<GroupMessageResponse>> sendMessage(
+    public ResponseEntity<ApiResponse<GroupChatMessageResponse>> sendMessage(
             @PathVariable String chatId,
-            @RequestBody GroupMessageRequest request) {
+            @RequestBody GroupChatMessageRequest request) {
         String userId = jwtUtil.getCurrentUserId();
         request.setChatId(chatId);
         
-        GroupMessageResponse response = groupMessageService.sendMessage(userId, request);
+        GroupChatMessageResponse response = groupChatMessageService.sendMessage(userId, request);
         
         chatBroadcaster.broadcastGroupMessage(chatId, response);
         

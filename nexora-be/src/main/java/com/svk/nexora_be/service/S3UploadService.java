@@ -1,11 +1,12 @@
 package com.svk.nexora_be.service;
 
 import com.svk.nexora_be.config.S3Properties;
+import com.svk.nexora_be.dto.response.PresignedUrlForDownloadResponse;
+import com.svk.nexora_be.dto.response.PresignedUrlForUploadResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -23,12 +24,11 @@ import java.util.UUID;
 @Slf4j
 public class S3UploadService {
     private final S3Properties s3Properties;
-    // private final S3Client s3Client;
 
     /**
      * Generate presigned URL for file upload
      */
-    public PresignedUrlResponse generatePresignedUrl(String fileName, String mimeType, long fileSizeBytes) {
+    public PresignedUrlForUploadResponse generatePresignedUrl(String fileName, String mimeType, long fileSizeBytes) {
         try {
             // Validate file size
             long maxSizeBytes = s3Properties.getMaxFileSizeMb() * 1024 * 1024;
@@ -75,12 +75,12 @@ public class S3UploadService {
             log.info("✅ Presigned URL generated successfully");
             presigner.close();
 
-            return new PresignedUrlResponse(
-                fileKey,
-                presignedUrl,
-                s3Properties.getPresignedUrlExpirationMinutes(),
-                getFileUrl(fileKey)
-            );
+            return PresignedUrlForUploadResponse.builder()
+                .fileKey(fileKey)
+                .presignedUrl(presignedUrl)
+                .expirationMinutes(s3Properties.getPresignedUrlExpirationMinutes())
+                .fileUrl(getFileUrl(fileKey))
+                .build();
         } catch (Exception e) {
             log.error("❌ Error generating presigned URL: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to generate presigned URL: " + e.getMessage());
@@ -92,7 +92,7 @@ public class S3UploadService {
      * @param fileKey the S3 file key
      * @param forceDownload if true, adds attachment disposition to force download; if false, allows inline viewing
      */
-    public String generatePresignedDownloadUrl(String fileKey, boolean forceDownload) {
+    public PresignedUrlForDownloadResponse generatePresignedDownloadUrl(String fileKey, boolean forceDownload) {
         try {
             log.info("🔑 Generating presigned download URL for file key: {}, forceDownload: {}", fileKey, forceDownload);
 
@@ -133,7 +133,11 @@ public class S3UploadService {
             log.info("✅ Presigned download URL generated successfully");
             presigner.close();
 
-            return presignedUrl;
+            return PresignedUrlForDownloadResponse.builder()
+                .presignedUrl(presignedUrl)
+                .fileName(fileName)
+                .expirationHours(24)
+                .build();
         } catch (Exception e) {
             log.error("❌ Error generating presigned download URL: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to generate download URL: " + e.getMessage());
@@ -143,7 +147,7 @@ public class S3UploadService {
     /**
      * Generate presigned URL for file download (with attachment disposition)
      */
-    public String generatePresignedDownloadUrl(String fileKey) {
+    public PresignedUrlForDownloadResponse generatePresignedDownloadUrl(String fileKey) {
         return generatePresignedDownloadUrl(fileKey, true);
     }
     public String getFileUrl(String fileKey) {
@@ -167,48 +171,6 @@ public class S3UploadService {
             fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
         
-        return String.format("collab-gen/chat-files/%s_%s%s", timestamp, uuid, fileExtension);
-    }
-
-    /**
-     * Response DTO for presigned URL
-     */
-    public static class PresignedUrlResponse {
-        public String fileKey;
-        public String presignedUrl;
-        public long expirationMinutes;
-        public String fileUrl;
-
-        public PresignedUrlResponse(String fileKey, String presignedUrl, long expirationMinutes, String fileUrl) {
-            this.fileKey = fileKey;
-            this.presignedUrl = presignedUrl;
-            this.expirationMinutes = expirationMinutes;
-            this.fileUrl = fileUrl;
-        }
-
-        // Getters for JSON serialization
-        public String getFileKey() { return fileKey; }
-        public String getPresignedUrl() { return presignedUrl; }
-        public long getExpirationMinutes() { return expirationMinutes; }
-        public String getFileUrl() { return fileUrl; }
-    }
-
-    /**
-     * Request DTO for presigned URL generation
-     */
-    public static class PresignedUrlRequest {
-        public String fileName;
-        public String mimeType;
-        public long fileSizeBytes;
-
-        // Getters and setters
-        public String getFileName() { return fileName; }
-        public void setFileName(String fileName) { this.fileName = fileName; }
-        
-        public String getMimeType() { return mimeType; }
-        public void setMimeType(String mimeType) { this.mimeType = mimeType; }
-        
-        public long getFileSizeBytes() { return fileSizeBytes; }
-        public void setFileSizeBytes(long fileSizeBytes) { this.fileSizeBytes = fileSizeBytes; }
+        return String.format("nexora/chat-files/%s_%s%s", timestamp, uuid, fileExtension);
     }
 }
