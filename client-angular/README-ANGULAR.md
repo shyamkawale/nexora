@@ -412,8 +412,8 @@ this.chatService.sendDirectMessage(chatId, message).subscribe({
 
 ### File Upload Endpoints
 
-- `POST /api/v1/files/presigned-url` - Generate S3 presigned URL for upload
-- `GET /api/v1/files/download-url` - Generate S3 presigned URL for download
+- `POST /api/v1/files/presigned-upload-url` - Generate S3 presigned URL for upload
+- `GET /api/v1/files/presigned-download-url` - Generate S3 presigned URL for download
 
 **Example usage:**
 ```typescript
