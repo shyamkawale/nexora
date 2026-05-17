@@ -668,7 +668,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         next: (message) => {
           console.log('📨 Message received via WebSocket:', message);
           // Check if message is for current chat
-          if (this.selectedChat && message?.message) {
+          if (this.selectedChat && this.selectedChat.publicId == message?.chatId && message?.message) {
             // Check if message already exists in array (to avoid duplicates)
             const isDuplicate = this.messages.some(msg => 
               msg.publicId === message.publicId ||

@@ -16,6 +16,7 @@ public class DirectChatMessageResponse {
     private String publicId;
     private String message;
     private UserResponse sender;
+    private String chatId;
     private Boolean isRead;
     private Boolean containsMedia;
     private MediaFileResponse mediaFile;
@@ -26,6 +27,7 @@ public class DirectChatMessageResponse {
                 .publicId(msg.getPublicId())
                 .message(msg.getMessage())
                 .sender(UserResponse.fromUser(msg.getSender()))
+                .chatId(msg.getChat().getPublicId())
                 .isRead(msg.getIsRead())
                 .containsMedia(msg.getContainsMedia())
                 .mediaFile(MediaFileResponse.fromEntity(msg.getMediaFile()))
