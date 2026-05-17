@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  serverUrl: 'https://api.nexora.com',
-  websocketUrl: 'wss://api.nexora.com/ws'
+  serverUrl: 'https://nexora-vzdi.onrender.com',
+  websocketUrl: 'https://nexora-vzdi.onrender.com/ws'
 };
