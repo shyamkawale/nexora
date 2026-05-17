@@ -14,7 +14,6 @@ FROM eclipse-temurin:21-jre AS runtime
 
 ENV APP_HOME=/app \
     JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError" \
-    SPRING_PROFILES_ACTIVE=prod
 
 WORKDIR ${APP_HOME}
 
