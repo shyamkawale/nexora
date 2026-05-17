@@ -5,7 +5,6 @@ import com.svk.nexora_be.entity.User;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.UserService;
 import lombok.AllArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -67,13 +66,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    @CacheEvict(cacheNames = "users", allEntries = true)
     public User updateUser(User user) {
         return userRepository.save(user);
     }
 
     @Override
-    @CacheEvict(cacheNames = "users", allEntries = true)
     public void deleteUser(String publicId) {
         User user = getUserByPublicId(publicId);
         if (user != null) {
