@@ -34,7 +34,7 @@ public abstract class BaseMessage {
     @Column(nullable = false)
     protected Boolean containsMedia = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "media_file_id")
     protected MediaFile mediaFile;
 
