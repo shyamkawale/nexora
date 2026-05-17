@@ -1,14 +1,14 @@
 package com.svk.nexora_be.service.impl;
 
-import com.svk.nexora_be.entity.Comment;
+import com.svk.nexora_be.entity.PostComment;
 import com.svk.nexora_be.entity.Post;
 import com.svk.nexora_be.entity.PostLike;
 import com.svk.nexora_be.entity.User;
-import com.svk.nexora_be.repository.CommentRepository;
+import com.svk.nexora_be.repository.PostCommentRepository;
 import com.svk.nexora_be.repository.PostLikeRepository;
 import com.svk.nexora_be.repository.PostRepository;
 import com.svk.nexora_be.repository.UserRepository;
-import com.svk.nexora_be.service.LikeService;
+import com.svk.nexora_be.service.PostLikeService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @AllArgsConstructor
 @Transactional
-public class LikeServiceImpl implements LikeService {
+public class PostLikeServiceImpl implements PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
-    private final CommentRepository commentRepository;
+    private final PostCommentRepository postCommentRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -58,9 +58,7 @@ public class LikeServiceImpl implements LikeService {
 
     @Override
     public long getPostLikeCount(String postId) {
-        Post post = postRepository.findByPublicId(postId)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
-        return postLikeRepository.countByPost(post);
+        return postLikeRepository.countByPostPublicId(postId);
     }
 
     @Override
@@ -75,20 +73,20 @@ public class LikeServiceImpl implements LikeService {
     }
 
     @Override
-    public void likeComment(String commentId, String userId) {
-        Comment comment = commentRepository.findByPublicId(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+    public void likePostComment(String postCommentId, String userId) {
+        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+                .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         User user = userRepository.findByPublicId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // Check if already liked
-        if (postLikeRepository.existsByCommentAndUser(comment, user)) {
+        if (postLikeRepository.existsByCommentAndUser(postComment, user)) {
             return;
         }
 
         PostLike like = PostLike.builder()
-                .comment(comment)
+                .comment(postComment)
                 .user(user)
                 .build();
 
@@ -96,32 +94,30 @@ public class LikeServiceImpl implements LikeService {
     }
 
     @Override
-    public void unlikeComment(String commentId, String userId) {
-        Comment comment = commentRepository.findByPublicId(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+    public void unlikePostComment(String postCommentId, String userId) {
+        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+                .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         User user = userRepository.findByPublicId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        postLikeRepository.findByCommentAndUser(comment, user)
+        postLikeRepository.findByCommentAndUser(postComment, user)
                 .ifPresent(postLikeRepository::delete);
     }
 
     @Override
-    public long getCommentLikeCount(String commentId) {
-        Comment comment = commentRepository.findByPublicId(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
-        return postLikeRepository.countByComment(comment);
+    public long getPostCommentLikeCount(String postCommentId) {
+        return postLikeRepository.countByCommentPublicId(postCommentId);
     }
 
     @Override
-    public boolean isCommentLikedByUser(String commentId, String userId) {
-        Comment comment = commentRepository.findByPublicId(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found"));
+    public boolean isPostCommentLikedByUser(String postCommentId, String userId) {
+        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+                .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         User user = userRepository.findByPublicId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        return postLikeRepository.existsByCommentAndUser(comment, user);
+        return postLikeRepository.existsByCommentAndUser(postComment, user);
     }
 }
