@@ -30,6 +30,7 @@ public class NexoraBeApplication {
 			// Redis Configuration (Environment-specific)
 			setPropertyIfExists(dotenv, "REDIS_HOST");
 			setPropertyIfExists(dotenv, "REDIS_PORT");
+			setPropertyIfExists(dotenv, "REDIS_PASSWORD");
 			
 			// JWT Configuration (Environment-specific)
 			setPropertyIfExists(dotenv, "JWT_SECRET");
