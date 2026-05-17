@@ -18,6 +18,7 @@ public class NexoraBeApplication {
 			setPropertyIfExists(dotenv, "DB_URL");
 			setPropertyIfExists(dotenv, "DB_USERNAME");
 			setPropertyIfExists(dotenv, "DB_PASSWORD");
+			setPropertyIfExists(dotenv, "DB_DEFAULT_SCHEMA");
 			
 			// Database Connection Pool Configuration (Tuning per environment)
 			setPropertyIfExists(dotenv, "DB_HIKARI_MAXIMUM_POOL_SIZE");
