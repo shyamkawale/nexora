@@ -9,8 +9,6 @@ import com.svk.nexora_be.repository.PostRepository;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.PostService;
 import lombok.AllArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,6 @@ public class PostServiceImpl implements PostService {
     private final UserRepository userRepository;
 
     @Override
-    @CacheEvict(cacheNames = "postsByAuthor", key = "'author:' + #userId")
     public PostResponse createPost(String userId, CreatePostRequest request) {
         User author = userRepository.findByPublicId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -88,10 +85,6 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Caching(evict = {
-        @CacheEvict(cacheNames = "posts", key = "'post:' + #postId"),
-        @CacheEvict(cacheNames = "postsByAuthor", key = "'author:' + #userId")
-    })
     public void deletePost(String postId, String userId) {
         Post post = postRepository.findByPublicId(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
