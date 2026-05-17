@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { LoaderComponent } from '../../shared/components/loader.component';
-import { FeedService, Post, Comment } from '../../core/services/feed.service';
+import { FeedService, Post, PostComment } from '../../core/services/feed.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -22,7 +22,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   creatingPost = false;
   currentUserId: string | null = null;
   expandedPostId: string | null = null;
-  postComments: { [postId: string]: Comment[] } = {};
+  postComments: { [postId: string]: PostComment[] } = {};
   newComments: { [postId: string]: string } = {};
   loadingComments: { [postId: string]: boolean } = {};
   private destroy$ = new Subject<void>();
@@ -151,18 +151,18 @@ export class FeedComponent implements OnInit, OnDestroy {
       );
   }
 
-  createComment(postId: string): void {
+  createPostComment(postId: string): void {
     const content = this.newComments[postId]?.trim();
     if (!content) return;
 
-    this.feedService.createComment(postId, content)
+    this.feedService.createPostComment(postId, content)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (comment: Comment) => {
+        (postComment: PostComment) => {
           if (!this.postComments[postId]) {
             this.postComments[postId] = [];
           }
-          this.postComments[postId].push(comment);
+          this.postComments[postId].push(postComment);
           this.newComments[postId] = '';
           
           // Update post comment count
@@ -170,48 +170,48 @@ export class FeedComponent implements OnInit, OnDestroy {
           if (post) {
             post.commentCount++;
           }
-          console.log('✅ Comment created');
+          console.log('✅ Post comment created');
         },
-        error => console.error('❌ Error creating comment:', error)
+        error => console.error('❌ Error creating post comment:', error)
       );
   }
 
-  deleteComment(commentId: string): void {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+  deletePostComment(postCommentId: string): void {
+    if (!confirm('Are you sure you want to delete this post comment?')) return;
 
-    this.feedService.deleteComment(commentId)
+    this.feedService.deletePostComment(postCommentId)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         () => {
           for (const postId in this.postComments) {
-            this.postComments[postId] = this.postComments[postId].filter(c => c.publicId !== commentId);
+            this.postComments[postId] = this.postComments[postId].filter(c => c.publicId !== postCommentId);
           }
-          console.log('✅ Comment deleted');
+          console.log('✅ Post comment deleted');
         },
-        error => console.error('❌ Error deleting comment:', error)
+        error => console.error('❌ Error deleting post comment:', error)
       );
   }
 
-  toggleCommentLike(comment: Comment, postId: string): void {
-    if (comment.likedByCurrentUser) {
-      this.feedService.unlikeComment(comment.publicId)
+  togglePostCommentLike(postComment: PostComment, postId: string): void {
+    if (postComment.likedByCurrentUser) {
+      this.feedService.unlikePostComment(postComment.publicId)
         .pipe(takeUntil(this.destroy$))
         .subscribe(
           (response: any) => {
-            comment.likedByCurrentUser = false;
-            comment.likeCount = response.likeCount || 0;
+            postComment.likedByCurrentUser = false;
+            postComment.likeCount = response.likeCount || 0;
           },
-          error => console.error('❌ Error unliking comment:', error)
+          error => console.error('❌ Error unliking post comment:', error)
         );
     } else {
-      this.feedService.likeComment(comment.publicId)
+      this.feedService.likePostComment(postComment.publicId)
         .pipe(takeUntil(this.destroy$))
         .subscribe(
           (response: any) => {
-            comment.likedByCurrentUser = true;
-            comment.likeCount = response.likeCount || 0;
+            postComment.likedByCurrentUser = true;
+            postComment.likeCount = response.likeCount || 0;
           },
-          error => console.error('❌ Error liking comment:', error)
+          error => console.error('❌ Error liking post comment:', error)
         );
     }
   }
@@ -220,8 +220,8 @@ export class FeedComponent implements OnInit, OnDestroy {
     return post.author.publicId === this.currentUserId;
   }
 
-  isCommentAuthor(comment: Comment): boolean {
-    return comment.author.publicId === this.currentUserId;
+  isPostCommentAuthor(postComment: PostComment): boolean {
+    return postComment.author.publicId === this.currentUserId;
   }
 
   getCommentText(postId: string): string {

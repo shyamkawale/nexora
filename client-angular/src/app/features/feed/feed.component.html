@@ -82,9 +82,9 @@
             </button>
           </div>
 
-          <!-- Comments Section -->
+          <!-- Post Comments Section -->
           <div *ngIf="expandedPostId === post.publicId" class="comments-section">
-            <!-- Comment Input -->
+            <!-- Post Comment Input -->
             <div class="comment-input-container">
               <div class="user-avatar-small">👤</div>
               <input 
@@ -92,10 +92,10 @@
                 [(ngModel)]="newComments[post.publicId]"
                 placeholder="Write a comment..."
                 class="comment-input"
-                (keyup.enter)="createComment(post.publicId)"
+                (keyup.enter)="createPostComment(post.publicId)"
               />
               <button 
-                (click)="createComment(post.publicId)"
+                (click)="createPostComment(post.publicId)"
                 class="comment-submit-btn"
                 [disabled]="!getCommentText(post.publicId)"
               >
@@ -103,7 +103,7 @@
               </button>
             </div>
 
-            <!-- Comments List -->
+            <!-- Post Comments List -->
             <div class="comments-list">
               <app-loader *ngIf="loadingComments[post.publicId]" [isLoading]="true" message="Loading comments..."></app-loader>
               
@@ -118,8 +118,8 @@
                     <span class="comment-time">{{ comment.createdAt | date:'short' }}</span>
                   </div>
                   <button 
-                    *ngIf="isCommentAuthor(comment)"
-                    (click)="deleteComment(comment.publicId)"
+                    *ngIf="isPostCommentAuthor(comment)"
+                    (click)="deletePostComment(comment.publicId)"
                     class="delete-btn"
                     title="Delete comment"
                   >
@@ -129,7 +129,7 @@
                 <div class="comment-content">{{ comment.content }}</div>
                 <div class="comment-actions">
                   <button 
-                    (click)="toggleCommentLike(comment, post.publicId)"
+                    (click)="togglePostCommentLike(comment, post.publicId)"
                     [class.liked]="comment.likedByCurrentUser"
                     class="action-btn-small"
                   >

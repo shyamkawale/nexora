@@ -13,7 +13,7 @@ export interface Post {
   updatedAt: number;
 }
 
-export interface Comment {
+export interface PostComment {
   publicId: string;
   content: string;
   author: any;
@@ -55,23 +55,23 @@ export class FeedService {
     return this.httpService.delete(`/api/v1/posts/${postId}`);
   }
 
-  // Comments
-  createComment(postId: string, content: string): Observable<Comment> {
-    console.log('💬 Creating comment on post:', postId);
-    return this.httpService.post<Comment>('/api/v1/comments', {
+  // Post Comments
+  createPostComment(postId: string, content: string): Observable<PostComment> {
+    console.log('💬 Creating post comment on post:', postId);
+    return this.httpService.post<PostComment>('/api/v1/post-comments', {
       postId,
       content
     });
   }
 
   getPostComments(postId: string, page: number = 0, size: number = 10): Observable<any> {
-    console.log('💬 Fetching comments for post:', postId);
-    return this.httpService.get(`/api/v1/comments/post/${postId}?page=${page}&size=${size}`);
+    console.log('💬 Fetching post comments for post:', postId);
+    return this.httpService.get(`/api/v1/post-comments/post/${postId}?page=${page}&size=${size}`);
   }
 
-  deleteComment(commentId: string): Observable<any> {
-    console.log('🗑️ Deleting comment:', commentId);
-    return this.httpService.delete(`/api/v1/comments/${commentId}`);
+  deletePostComment(postCommentId: string): Observable<any> {
+    console.log('🗑️ Deleting post comment:', postCommentId);
+    return this.httpService.delete(`/api/v1/post-comments/${postCommentId}`);
   }
 
   // Likes
@@ -90,18 +90,18 @@ export class FeedService {
     return this.httpService.get(`/api/v1/likes/posts/${postId}/count`);
   }
 
-  likeComment(commentId: string): Observable<any> {
-    console.log('❤️ Liking comment:', commentId);
-    return this.httpService.post(`/api/v1/likes/comments/${commentId}`, {});
+  likePostComment(postCommentId: string): Observable<any> {
+    console.log('❤️ Liking post comment:', postCommentId);
+    return this.httpService.post(`/api/v1/likes/post-comments/${postCommentId}`, {});
   }
 
-  unlikeComment(commentId: string): Observable<any> {
-    console.log('🤍 Unliking comment:', commentId);
-    return this.httpService.delete(`/api/v1/likes/comments/${commentId}`);
+  unlikePostComment(postCommentId: string): Observable<any> {
+    console.log('🤍 Unliking post comment:', postCommentId);
+    return this.httpService.delete(`/api/v1/likes/post-comments/${postCommentId}`);
   }
 
-  getCommentLikeCount(commentId: string): Observable<any> {
-    console.log('❤️ Getting like count for comment:', commentId);
-    return this.httpService.get(`/api/v1/likes/comments/${commentId}/count`);
+  getPostCommentLikeCount(postCommentId: string): Observable<any> {
+    console.log('❤️ Getting like count for post comment:', postCommentId);
+    return this.httpService.get(`/api/v1/likes/post-comments/${postCommentId}/count`);
   }
 }
