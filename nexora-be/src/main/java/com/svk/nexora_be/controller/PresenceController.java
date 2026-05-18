@@ -11,12 +11,13 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.svk.nexora_be.security.JwtUtil;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ import java.util.List;
 public class PresenceController {
 
     private final PresenceService presenceService;
-    // private final SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
@@ -62,8 +63,7 @@ public class PresenceController {
      * Clients can send updates via /app/presence/update
      */
     @MessageMapping("/presence/update")
-    @SendTo("/topic/presence/updates")
-    public PresenceUpdateMessage handlePresenceUpdate(java.util.Map<String, Object> message) {
+    public void handlePresenceUpdate(java.util.Map<String, Object> message) {
         String userId = jwtUtil.getCurrentUserId();
 
         log.info("📍 Presence update received from: {}", userId);
@@ -74,7 +74,10 @@ public class PresenceController {
                 .message(message.getOrDefault("message", "").toString())
                 .build();
 
-        return response;
+        messagingTemplate.convertAndSend(
+                "/topic/org/" + OrganizationContextHolder.requireOrganizationPublicId() + "/presence/updates",
+                response
+        );
     }
 
     /**

@@ -1,9 +1,12 @@
 package com.svk.nexora_be.service.impl;
 
 import com.svk.nexora_be.dto.response.UserResponse;
+import com.svk.nexora_be.enums.OrganizationMemberStatus;
+import com.svk.nexora_be.repository.OrganizationMemberRepository;
 import com.svk.nexora_be.entity.User;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.UserService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
+    private final OrganizationMemberRepository organizationMemberRepository;
 
     @Override
     public User getUserById(Long id) {
@@ -46,6 +50,18 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public List<UserResponse> getAllUsers(Pageable pageable) {
+        Long organizationId = OrganizationContextHolder.getOrganizationId();
+        if (organizationId != null) {
+            return organizationMemberRepository
+                    .findByOrganizationIdAndStatusOrderByUserUsernameAsc(
+                            organizationId,
+                            OrganizationMemberStatus.APPROVED
+                    )
+                    .stream()
+                    .map(membership -> UserResponse.fromUser(membership.getUser()))
+                    .collect(Collectors.toList());
+        }
+
         return userRepository.findAll(pageable)
                 .stream()
                 .map(UserResponse::fromUser)
@@ -55,6 +71,24 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public List<UserResponse> searchUsers(String query) {
         String searchQuery = query.toLowerCase();
+
+        Long organizationId = OrganizationContextHolder.getOrganizationId();
+        if (organizationId != null) {
+            return organizationMemberRepository
+                    .findByOrganizationIdAndStatusOrderByUserUsernameAsc(
+                            organizationId,
+                            OrganizationMemberStatus.APPROVED
+                    )
+                    .stream()
+                    .map(membership -> membership.getUser())
+                    .filter(user ->
+                            (user.getUsername() != null && user.getUsername().toLowerCase().contains(searchQuery)) ||
+                            user.getEmail().toLowerCase().contains(searchQuery)
+                    )
+                    .map(UserResponse::fromUser)
+                    .collect(Collectors.toList());
+        }
+
         return userRepository.findAll()
                 .stream()
                 .filter(user -> 
