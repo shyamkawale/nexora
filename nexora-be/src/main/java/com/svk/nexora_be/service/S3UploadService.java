@@ -3,6 +3,7 @@ package com.svk.nexora_be.service;
 import com.svk.nexora_be.config.S3Properties;
 import com.svk.nexora_be.dto.response.PresignedUrlForDownloadResponse;
 import com.svk.nexora_be.dto.response.PresignedUrlForUploadResponse;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,7 +43,7 @@ public class S3UploadService {
             }
 
             // Generate unique file key with timestamp to avoid conflicts
-            String fileKey = generateFileKey(fileName);
+            String fileKey = generateFileKey(fileName, OrganizationContextHolder.requireOrganizationPublicId());
             
             log.info("🔑 Generating presigned URL for file: {} (key: {})", fileName, fileKey);
 
@@ -161,7 +162,7 @@ public class S3UploadService {
     /**
      * Generate a unique file key for S3 storage
      */
-    private String generateFileKey(String originalFileName) {
+    private String generateFileKey(String originalFileName, String organizationPublicId) {
         String timestamp = String.valueOf(System.currentTimeMillis());
         String uuid = UUID.randomUUID().toString().substring(0, 8);
         
@@ -171,6 +172,6 @@ public class S3UploadService {
             fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
         
-        return String.format("nexora/chat-files/%s_%s%s", timestamp, uuid, fileExtension);
+        return String.format("nexora/org/%s/uploads/%s_%s%s", organizationPublicId, timestamp, uuid, fileExtension);
     }
 }

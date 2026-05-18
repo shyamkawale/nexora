@@ -101,6 +101,7 @@ public class FileUploadController {
             @RequestParam String fileKey,
             @RequestParam(required = false, defaultValue = "false") boolean download) {
         try {
+            mediaFileService.getByFilePath(fileKey);
             PresignedUrlForDownloadResponse response =
                     s3UploadService.generatePresignedDownloadUrl(fileKey, download);
             return ResponseEntity.ok(ApiResponse.success(response, "Download URL generated"));
