@@ -45,7 +45,7 @@ export class AdminDashboardComponent implements OnInit {
     this.httpService.get<any>('/api/v1/admin/users').subscribe({
       next: (response: any) => {
         // Filter out admin users - only show regular users
-        this.users = response.filter((user: UserManagement) => user.role === 'USER');
+        this.users = response.filter((user: UserManagement) => user.username != 'admin');
         this.loading = false;
       },
       error: (error) => {
