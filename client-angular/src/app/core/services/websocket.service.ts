@@ -17,6 +17,7 @@ export class WebSocketService {
   private reconnectDelay = 3000;
   private isBrowser: boolean;
   private activeSubscriptions = new Map<string, any>();
+  private intentionalDisconnect = false;
 
   public message$ = this.messageSubject.asObservable();
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
@@ -39,10 +40,12 @@ export class WebSocketService {
 
     const wsUrl = environment.websocketUrl;
     console.log('📡 Attempting STOMP connection to:', wsUrl);
+    this.intentionalDisconnect = false;
     
     this.client = new Client({
       // brokerURL: wsUrl,
       webSocketFactory: () => new SockJS(wsUrl),
+      connectHeaders: this.getConnectHeaders(),
       reconnectDelay: this.reconnectDelay,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
@@ -61,7 +64,9 @@ export class WebSocketService {
       onDisconnect: () => {
         console.log('⚠️ STOMP disconnected');
         this.connectionStatusSubject.next(false);
-        this.attemptReconnect();
+        if (!this.intentionalDisconnect) {
+          this.attemptReconnect();
+        }
       }
     });
 
@@ -77,6 +82,11 @@ export class WebSocketService {
     // Skip if already subscribed to this channel
     if (this.activeSubscriptions.has(channel)) {
       console.log('✅ Already subscribed to channel:', channel);
+      return this.message$;
+    }
+
+    if (this.isStaleOrganizationChannel(channel)) {
+      console.log('⏭️ Skipping stale organization channel:', channel);
       return this.message$;
     }
 
@@ -163,13 +173,46 @@ export class WebSocketService {
     if (!this.isBrowser) return;
     
     console.log('🔌 Closing STOMP connection...');
-    if (this.client && this.client.connected) {
-      this.client.deactivate();
+    this.intentionalDisconnect = true;
+    const client = this.client;
+    this.client = null;
+    if (client && client.connected) {
+      client.deactivate();
     }
+    this.activeSubscriptions.clear();
     this.connectionStatusSubject.next(false);
   }
 
   isConnected(): boolean {
     return this.isBrowser && this.client ? this.client.connected : false;
+  }
+
+  private getConnectHeaders(): Record<string, string> {
+    if (!this.isBrowser) return {};
+
+    const headers: Record<string, string> = {};
+    const token = localStorage.getItem('authToken');
+    const organizationId = localStorage.getItem('activeOrganizationId');
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    if (organizationId) {
+      headers['X-Organization-Id'] = organizationId;
+    }
+
+    return headers;
+  }
+
+  private isStaleOrganizationChannel(channel: string): boolean {
+    const marker = '/topic/org/';
+    if (!channel.startsWith(marker)) return false;
+
+    const start = marker.length;
+    const end = channel.indexOf('/', start);
+    const channelOrgId = end >= 0 ? channel.substring(start, end) : channel.substring(start);
+    const activeOrgId = this.isBrowser ? localStorage.getItem('activeOrganizationId') : null;
+
+    return !!activeOrgId && channelOrgId !== activeOrgId;
   }
 }

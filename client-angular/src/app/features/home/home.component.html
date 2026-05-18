@@ -1,9 +1,16 @@
     <div class="home-container">
       <div class="home-header">
         <h1>Welcome to Nexora</h1>
+        <p *ngIf="activeOrganization$ | async as org">Working in {{ org.name }}</p>
       </div>
       <div class="home-content">
-        <div class="dashboard-grid">
+        <div class="org-required" *ngIf="!(activeOrganization$ | async)">
+          <h2>Select an organization to begin</h2>
+          <p>Feeds, people, and chats are available inside an organization workspace.</p>
+          <a routerLink="/organizations" class="btn">Open Organizations</a>
+        </div>
+
+        <div class="dashboard-grid" *ngIf="activeOrganization$ | async">
           <div class="card">
             <h3>💬 Chat</h3>
             <p>Message your team members</p>
@@ -12,7 +19,7 @@
           <div class="card">
             <h3>📰 Feeds</h3>
             <p>View and create posts</p>
-            <a routerLink="/feeds" class="btn">View Feeds</a>
+            <a routerLink="/feed" class="btn">View Feeds</a>
           </div>
           <div class="card">
             <h3>👥 People</h3>

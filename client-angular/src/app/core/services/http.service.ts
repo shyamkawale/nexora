@@ -38,7 +38,17 @@ export class HttpService {
       console.warn('⚠️ No auth token found!');
     }
 
+    const organizationId = this.getActiveOrganizationId();
+    if (organizationId) {
+      headers = headers.set('X-Organization-Id', organizationId);
+    }
+
     return headers;
+  }
+
+  private getActiveOrganizationId(): string | null {
+    if (!this.isBrowser) return null;
+    return localStorage.getItem('activeOrganizationId');
   }
 
   private getAuthToken(): string | null {
@@ -143,6 +153,11 @@ export class HttpService {
       const token = localStorage.getItem('authToken');
       if (token) {
         headers = headers.set('Authorization', `Bearer ${token}`);
+      }
+
+      const organizationId = this.getActiveOrganizationId();
+      if (organizationId) {
+        headers = headers.set('X-Organization-Id', organizationId);
       }
     }
 

@@ -9,8 +9,9 @@ import { WebSocketService } from '../../core/services/websocket.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PresenceService } from '../../core/services/presence.service';
 import { FileUploadService, FileUploadProgress } from '../../core/services/file-upload.service';
+import { OrganizationService } from '../../core/services/organization.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-chat',
@@ -33,6 +34,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   directChats: DirectChat[] = [];
   groupChats: GroupChat[] = [];
   private destroy$ = new Subject<void>();
+  private activeOrganizationId: string | null = null;
 
   // Group creation modal
   showCreateGroupModal = false;
@@ -65,6 +67,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private presenceService: PresenceService,
     private fileUploadService: FileUploadService,
+    private organizationService: OrganizationService,
     private router: Router
   ) {
     // Get current user ID
@@ -85,8 +88,48 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     console.log('💬 Chat component initialized');
-    this.loadUserChats();
+    this.organizationService.activeOrganization$
+      .pipe(
+        map(organization => organization?.publicId || null),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(organizationId => this.handleOrganizationChange(organizationId));
     this.subscribeToWebSocketMessages();
+  }
+
+  private handleOrganizationChange(organizationId: string | null): void {
+    const hadOrganization = !!this.activeOrganizationId;
+    const changedOrganization = hadOrganization && this.activeOrganizationId !== organizationId;
+    this.activeOrganizationId = organizationId;
+
+    this.resetChatWorkspace(changedOrganization || !organizationId);
+    if (organizationId) {
+      this.loadUserChats();
+    } else {
+      this.loadingChats = false;
+    }
+  }
+
+  private resetChatWorkspace(clearSelectedChat: boolean): void {
+    this.directChats = [];
+    this.groupChats = [];
+    this.userChats = [];
+    this.messages = [];
+    this.newMessage = '';
+    this.previewFiles = [];
+    this.uploadProgress = null;
+    this.showGroupDetails = false;
+    this.allUsers = [];
+    this.memberSearchResults = [];
+    this.presignedUrlCache.clear();
+    this.presignedDownloadCache.clear();
+
+    if (clearSelectedChat) {
+      this.selectedChat = null;
+      this.selectedChatId = null;
+      this.selectedChatType = null;
+    }
   }
 
   private loadUserChats(): void {
@@ -126,6 +169,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   refreshChats(): void {
     if (this.loadingChats) return;
+    this.resetChatWorkspace(true);
     this.loadUserChats();
   }
 
@@ -170,11 +214,11 @@ export class ChatComponent implements OnInit, OnDestroy {
     if ('user1' in chat) {
       // It's a direct message chat
       this.selectedChatType = 'direct';
-      this.webSocketService.subscribeToChannel(`/topic/messages/${chat.publicId}`);
+      this.webSocketService.subscribeToChannel(this.getOrgTopic(`/messages/${chat.publicId}`));
     } else {
       // It's a group chat
       this.selectedChatType = 'group';
-      this.webSocketService.subscribeToChannel(`/topic/group-messages/${chat.publicId}`);
+      this.webSocketService.subscribeToChannel(this.getOrgTopic(`/group-messages/${chat.publicId}`));
     }
     
     this.loadMessages();
@@ -707,6 +751,11 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     const normalized = String(candidate).trim();
     return normalized.length > 0 ? normalized : null;
+  }
+
+  private getOrgTopic(path: string): string {
+    const organizationId = this.organizationService.getActiveOrganizationIdSnapshot();
+    return organizationId ? `/topic/org/${organizationId}${path}` : `/topic${path}`;
   }
 
   private isSameUser(userA: any, userB: any): boolean {

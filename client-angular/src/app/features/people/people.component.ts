@@ -6,9 +6,10 @@ import { LoaderComponent } from '../../shared/components/loader.component';
 import { PeopleService } from '../../core/services/people.service';
 import { ChatService } from '../../core/services/chat.service';
 import { PresenceService } from '../../core/services/presence.service';
+import { OrganizationService } from '../../core/services/organization.service';
 import { User } from '../../core/services/user.service';
 import { Subject } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { takeUntil, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { interval } from 'rxjs';
 
 @Component({
@@ -31,12 +32,26 @@ export class PeopleComponent implements OnInit, OnDestroy {
     private peopleService: PeopleService,
     private chatService: ChatService,
     private presenceService: PresenceService,
+    private organizationService: OrganizationService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     console.log('👥 People component initialized');
-    this.loadUsers();
+    this.organizationService.activeOrganization$
+      .pipe(
+        map(organization => organization?.publicId || null),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(organizationId => {
+        this.resetPeople();
+        if (organizationId) {
+          this.loadUsers();
+        } else {
+          this.isLoading = false;
+        }
+      });
     this.setupSearch();
     this.subscribeToPresenceUpdates();
   }
@@ -119,6 +134,13 @@ export class PeopleComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       );
+  }
+
+  private resetPeople(): void {
+    this.searchQuery = '';
+    this.allUsers = [];
+    this.filteredUsers = [];
+    this.onlineUsers = [];
   }
 
   private setupSearch(): void {
