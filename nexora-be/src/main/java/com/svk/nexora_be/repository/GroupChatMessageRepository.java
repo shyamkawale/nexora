@@ -9,4 +9,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GroupChatMessageRepository extends JpaRepository<GroupChatMessage, Long> {
     Page<GroupChatMessage> findByGroupChatPublicIdOrderByCreatedAtDesc(String groupChatPublicId, Pageable pageable);
+    Page<GroupChatMessage> findByGroupChatOrganizationIdAndGroupChatPublicIdOrderByCreatedAtDesc(
+            Long organizationId,
+            String groupChatPublicId,
+            Pageable pageable
+    );
 }

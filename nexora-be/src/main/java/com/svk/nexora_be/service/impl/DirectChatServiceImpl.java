@@ -11,9 +11,11 @@ import com.svk.nexora_be.exception.ForbiddenException;
 import com.svk.nexora_be.exception.NotFoundException;
 import com.svk.nexora_be.repository.DirectChatRepository;
 import com.svk.nexora_be.repository.DirectChatMessageRepository;
+import com.svk.nexora_be.repository.OrganizationRepository;
 import com.svk.nexora_be.service.ChatAccessGuard;
 import com.svk.nexora_be.service.DirectChatService;
 import com.svk.nexora_be.service.MediaFileService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,15 +31,19 @@ public class DirectChatServiceImpl implements DirectChatService {
     private final DirectChatRepository directChatRepository;
     private final ChatAccessGuard chatAccessGuard;
     private final MediaFileService mediaFileService;
+    private final OrganizationRepository organizationRepository;
 
     @Override
     public DirectChatResponse getOrCreateChat(String userId, String otherUserId) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User user = chatAccessGuard.getUserOrThrow(userId);
         User otherUser = chatAccessGuard.getUserOrThrow(otherUserId);
+        chatAccessGuard.verifyApprovedOrganizationMember(organizationId, otherUserId);
 
-        DirectChat chat = directChatRepository.findChatBetweenUsers(user, otherUser)
+        DirectChat chat = directChatRepository.findChatBetweenUsersInOrganization(organizationId, user, otherUser)
                 .orElseGet(() -> {
                     DirectChat newChat = DirectChat.builder()
+                            .organization(organizationRepository.getReferenceById(organizationId))
                             .user1(user)
                             .user2(otherUser)
                             .build();
@@ -49,8 +55,9 @@ public class DirectChatServiceImpl implements DirectChatService {
 
     @Override
     public List<DirectChatResponse> getUserChats(String userId) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User user = chatAccessGuard.getUserOrThrow(userId);
-        return directChatRepository.findAllChatsForUser(user)
+        return directChatRepository.findAllChatsForUserInOrganization(organizationId, user)
                 .stream()
                 .map(DirectChatResponse::mapDirectChatToResponse)
                 .toList();
@@ -58,7 +65,8 @@ public class DirectChatServiceImpl implements DirectChatService {
 
     @Override
     public Page<DirectChatMessageResponse> getChatMessages(String chatId, String currentUserId, Pageable pageable) {
-        DirectChat chat = directChatRepository.findByPublicId(chatId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        DirectChat chat = directChatRepository.findByOrganizationIdAndPublicId(organizationId, chatId)
                 .orElseThrow(() -> new NotFoundException("Chat not found: " + chatId));
 
         if(!chat.hasParticipant(currentUserId)) {
@@ -71,9 +79,10 @@ public class DirectChatServiceImpl implements DirectChatService {
 
     @Override
     public DirectChatMessageResponse sendMessage(String userId, DirectChatMessageRequest request) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User sender = chatAccessGuard.getUserOrThrow(userId);
 
-        DirectChat chat = directChatRepository.findByPublicId(request.getChatId())
+        DirectChat chat = directChatRepository.findByOrganizationIdAndPublicId(organizationId, request.getChatId())
                 .orElseThrow(() -> new NotFoundException("Chat not found: " + request.getChatId()));
 
         if (!chat.hasParticipant(userId)) {
