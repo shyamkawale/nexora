@@ -22,7 +22,16 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Long> {
     Optional<Post> findByPublicId(String publicId);
 
+    Optional<Post> findByOrganizationIdAndPublicId(Long organizationId, String publicId);
+
     Page<Post> findByIsActiveTrueOrderByCreatedAtDesc(Pageable pageable);
 
+    Page<Post> findByOrganizationIdAndIsActiveTrueOrderByCreatedAtDesc(Long organizationId, Pageable pageable);
+
     List<Post> findByAuthorPublicIdAndIsActiveTrueOrderByCreatedAtDesc(String authorPublicId);
+
+    List<Post> findByOrganizationIdAndAuthorPublicIdAndIsActiveTrueOrderByCreatedAtDesc(
+            Long organizationId,
+            String authorPublicId
+    );
 }

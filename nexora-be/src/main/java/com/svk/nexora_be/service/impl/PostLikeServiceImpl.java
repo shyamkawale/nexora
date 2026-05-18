@@ -9,6 +9,7 @@ import com.svk.nexora_be.repository.PostLikeRepository;
 import com.svk.nexora_be.repository.PostRepository;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.PostLikeService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +26,8 @@ public class PostLikeServiceImpl implements PostLikeService {
 
     @Override
     public void likePost(String postId, String userId) {
-        Post post = postRepository.findByPublicId(postId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        Post post = postRepository.findByOrganizationIdAndPublicId(organizationId, postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
         User user = userRepository.findByPublicId(userId)
@@ -46,7 +48,8 @@ public class PostLikeServiceImpl implements PostLikeService {
 
     @Override
     public void unlikePost(String postId, String userId) {
-        Post post = postRepository.findByPublicId(postId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        Post post = postRepository.findByOrganizationIdAndPublicId(organizationId, postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
         User user = userRepository.findByPublicId(userId)
@@ -58,12 +61,14 @@ public class PostLikeServiceImpl implements PostLikeService {
 
     @Override
     public long getPostLikeCount(String postId) {
-        return postLikeRepository.countByPostPublicId(postId);
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        return postLikeRepository.countByOrganizationIdAndPostPublicId(organizationId, postId);
     }
 
     @Override
     public boolean isPostLikedByUser(String postId, String userId) {
-        Post post = postRepository.findByPublicId(postId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        Post post = postRepository.findByOrganizationIdAndPublicId(organizationId, postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
         User user = userRepository.findByPublicId(userId)
@@ -74,7 +79,8 @@ public class PostLikeServiceImpl implements PostLikeService {
 
     @Override
     public void likePostComment(String postCommentId, String userId) {
-        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        PostComment postComment = postCommentRepository.findByPostOrganizationIdAndPublicId(organizationId, postCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         User user = userRepository.findByPublicId(userId)
@@ -95,7 +101,8 @@ public class PostLikeServiceImpl implements PostLikeService {
 
     @Override
     public void unlikePostComment(String postCommentId, String userId) {
-        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        PostComment postComment = postCommentRepository.findByPostOrganizationIdAndPublicId(organizationId, postCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         User user = userRepository.findByPublicId(userId)
@@ -107,12 +114,14 @@ public class PostLikeServiceImpl implements PostLikeService {
 
     @Override
     public long getPostCommentLikeCount(String postCommentId) {
-        return postLikeRepository.countByCommentPublicId(postCommentId);
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        return postLikeRepository.countByOrganizationIdAndCommentPublicId(organizationId, postCommentId);
     }
 
     @Override
     public boolean isPostCommentLikedByUser(String postCommentId, String userId) {
-        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        PostComment postComment = postCommentRepository.findByPostOrganizationIdAndPublicId(organizationId, postCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         User user = userRepository.findByPublicId(userId)

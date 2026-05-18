@@ -10,6 +10,7 @@ import com.svk.nexora_be.repository.PostLikeRepository;
 import com.svk.nexora_be.repository.PostRepository;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.PostCommentService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,10 +29,11 @@ public class PostCommentServiceImpl implements PostCommentService {
 
     @Override
     public PostCommentResponse createPostComment(String userId, CreatePostCommentRequest request) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User author = userRepository.findByPublicId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        Post post = postRepository.findByPublicId(request.getPostId())
+        Post post = postRepository.findByOrganizationIdAndPublicId(organizationId, request.getPostId())
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
         PostComment postComment = PostComment.builder()
@@ -51,13 +53,14 @@ public class PostCommentServiceImpl implements PostCommentService {
 
     @Override
     public PostCommentResponse getPostComment(String postCommentId, String currentUserId) {
-        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        PostComment postComment = postCommentRepository.findByPostOrganizationIdAndPublicId(organizationId, postCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         // Force eager load of author before returning to avoid lazy initialization outside transaction
         postComment.getAuthor().getId();
         
-        long likeCount = postLikeRepository.countByCommentPublicId(postCommentId);
+        long likeCount = postLikeRepository.countByOrganizationIdAndCommentPublicId(organizationId, postCommentId);
         User currentUser = userRepository.findByPublicId(currentUserId).orElse(null);
         boolean likedByCurrentUser = currentUser != null && 
                 postLikeRepository.existsByCommentAndUser(postComment, currentUser);
@@ -67,14 +70,20 @@ public class PostCommentServiceImpl implements PostCommentService {
 
     @Override
     public Page<PostCommentResponse> getPostComments(String postId, String currentUserId, Pageable pageable) {
-        Page<PostComment> comments = postCommentRepository.findByPostPublicIdAndIsActiveTrueOrderByCreatedAtDesc(postId, pageable);
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        Page<PostComment> comments = postCommentRepository
+                .findByPostOrganizationIdAndPostPublicIdAndIsActiveTrueOrderByCreatedAtDesc(
+                        organizationId,
+                        postId,
+                        pageable
+                );
         User currentUser = userRepository.findByPublicId(currentUserId).orElse(null);
 
         return comments.map(comment -> {
             // Force eager load of author to avoid lazy initialization outside transaction
             comment.getAuthor().getId();
             
-            long likeCount = postLikeRepository.countByCommentPublicId(comment.getPublicId());
+            long likeCount = postLikeRepository.countByOrganizationIdAndCommentPublicId(organizationId, comment.getPublicId());
             boolean likedByCurrentUser = currentUser != null && 
                     postLikeRepository.existsByCommentAndUser(comment, currentUser);
             return PostCommentResponse.fromPostComment(comment, likeCount, likedByCurrentUser);
@@ -83,7 +92,8 @@ public class PostCommentServiceImpl implements PostCommentService {
 
     @Override
     public void deletePostComment(String postCommentId, String userId) {
-        PostComment postComment = postCommentRepository.findByPublicId(postCommentId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        PostComment postComment = postCommentRepository.findByPostOrganizationIdAndPublicId(organizationId, postCommentId)
                 .orElseThrow(() -> new IllegalArgumentException("Post comment not found"));
 
         User user = userRepository.findByPublicId(userId)

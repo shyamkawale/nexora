@@ -12,6 +12,12 @@ import java.util.Optional;
 @Repository
 public interface PostCommentRepository extends JpaRepository<PostComment, Long> {
     Optional<PostComment> findByPublicId(String publicId);
+    Optional<PostComment> findByPostOrganizationIdAndPublicId(Long organizationId, String publicId);
     Page<PostComment> findByPostPublicIdAndIsActiveTrueOrderByCreatedAtDesc(String postPublicId, Pageable pageable);
+    Page<PostComment> findByPostOrganizationIdAndPostPublicIdAndIsActiveTrueOrderByCreatedAtDesc(
+            Long organizationId,
+            String postPublicId,
+            Pageable pageable
+    );
     List<PostComment> findByPostPublicIdAndIsActiveTrueOrderByCreatedAtDesc(String postPublicId);
 }
