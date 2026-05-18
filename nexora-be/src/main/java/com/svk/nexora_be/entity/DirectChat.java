@@ -16,6 +16,10 @@ import lombok.EqualsAndHashCode;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class DirectChat extends BaseChat {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user1_id", nullable = false)
     private User user1;

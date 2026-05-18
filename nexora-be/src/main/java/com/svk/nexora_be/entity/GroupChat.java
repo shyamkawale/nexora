@@ -20,6 +20,10 @@ import java.util.List;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class GroupChat extends BaseChat {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
+
     @Column(nullable = false, length = 255)
     private String groupName;
 

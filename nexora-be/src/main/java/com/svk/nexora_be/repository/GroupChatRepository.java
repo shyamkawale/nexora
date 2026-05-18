@@ -13,6 +13,14 @@ import java.util.Optional;
 public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
     Optional<GroupChat> findByPublicId(String publicId);
 
+    Optional<GroupChat> findByOrganizationIdAndPublicId(Long organizationId, String publicId);
+
     @Query("SELECT gc FROM GroupChat gc JOIN gc.members gcm WHERE gcm.user.publicId = :userPublicId AND gcm.isActive = true")
     List<GroupChat> findActiveGroupsForUser(@Param("userPublicId") String userPublicId);
+
+    @Query("SELECT gc FROM GroupChat gc JOIN gc.members gcm WHERE gc.organization.id = :organizationId AND gcm.user.publicId = :userPublicId AND gcm.isActive = true")
+    List<GroupChat> findActiveGroupsForUserInOrganization(
+            @Param("organizationId") Long organizationId,
+            @Param("userPublicId") String userPublicId
+    );
 }

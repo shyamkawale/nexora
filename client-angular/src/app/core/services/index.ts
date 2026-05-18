@@ -6,3 +6,4 @@ export * from './presence.service';
 export * from './user.service';
 export * from './chat.service';
 export * from './people.service';
+export * from './organization.service';

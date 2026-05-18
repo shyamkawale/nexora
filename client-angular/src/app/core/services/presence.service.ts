@@ -3,6 +3,8 @@ import { interval, Subject, BehaviorSubject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { WebSocketService } from './websocket.service';
 import { HttpService } from './http.service';
+import { OrganizationService } from './organization.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -18,9 +20,9 @@ export class PresenceService implements OnDestroy {
 
   constructor(
     private webSocketService: WebSocketService,
-    private httpService: HttpService
+    private httpService: HttpService,
+    private organizationService: OrganizationService
   ) {
-    this.subscribeToPresenceUpdates();
     // Fetch initial online users list
     // this.fetchOnlineUsersList();
     // Setup handler for browser close without logout
@@ -35,8 +37,20 @@ export class PresenceService implements OnDestroy {
     
     window.addEventListener('beforeunload', () => {
       console.log('📴 User closed browser - marking as offline via sendBeacon');
-      // Use sendBeacon for guaranteed delivery even on page unload
-      navigator.sendBeacon('/api/v1/user/presence-offline', '');
+      const token = localStorage.getItem('authToken');
+      const organizationId = localStorage.getItem('activeOrganizationId');
+      if (!token || !organizationId) return;
+
+      fetch(`${environment.serverUrl}/api/v1/presence/offline`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Organization-Id': organizationId,
+          'Content-Type': 'application/json'
+        },
+        body: '{}'
+      });
     });
   }
 
@@ -49,6 +63,7 @@ export class PresenceService implements OnDestroy {
 
     this.isPresenceActive = true;
     console.log('🟢 Starting presence updates (every 15 seconds)');
+    this.subscribeToPresenceUpdates();
 
     // Update presence every 15 seconds
     this.presenceInterval = interval(15000)
@@ -79,7 +94,10 @@ export class PresenceService implements OnDestroy {
    * Subscribe to real-time presence updates via WebSocket
    */
   private subscribeToPresenceUpdates(): void {
-    this.webSocketService.subscribeToChannel('/topic/presence/updates')
+    const organizationId = this.organizationService.getActiveOrganizationIdSnapshot();
+    if (!organizationId) return;
+
+    this.webSocketService.subscribeToChannel(`/topic/org/${organizationId}/presence/updates`)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         (message: any) => {

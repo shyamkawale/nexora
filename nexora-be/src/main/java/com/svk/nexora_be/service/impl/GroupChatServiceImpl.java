@@ -9,8 +9,10 @@ import com.svk.nexora_be.exception.NotFoundException;
 import com.svk.nexora_be.entity.User;
 import com.svk.nexora_be.repository.GroupChatMemberRepository;
 import com.svk.nexora_be.repository.GroupChatRepository;
+import com.svk.nexora_be.repository.OrganizationRepository;
 import com.svk.nexora_be.service.ChatAccessGuard;
 import com.svk.nexora_be.service.GroupChatService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,20 +26,25 @@ public class GroupChatServiceImpl implements GroupChatService {
     private final GroupChatRepository groupChatRepository;
     private final GroupChatMemberRepository groupChatMemberRepository;
     private final ChatAccessGuard chatAccessGuard;
+    private final OrganizationRepository organizationRepository;
 
     public GroupChatServiceImpl(GroupChatRepository groupChatRepository,
                               GroupChatMemberRepository groupChatMemberRepository,
-                              ChatAccessGuard chatAccessGuard) {
+                              ChatAccessGuard chatAccessGuard,
+                              OrganizationRepository organizationRepository) {
         this.groupChatRepository = groupChatRepository;
         this.groupChatMemberRepository = groupChatMemberRepository;
         this.chatAccessGuard = chatAccessGuard;
+        this.organizationRepository = organizationRepository;
     }
 
     @Override
     public GroupChatResponse createGroupChat(String creatorPublicId, CreateGroupChatRequest request) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User creator = chatAccessGuard.getUserOrThrow(creatorPublicId);
 
         GroupChat groupChat = GroupChat.builder()
+                .organization(organizationRepository.getReferenceById(organizationId))
                 .groupName(request.getGroupName())
                 .description(request.getDescription())
                 .createdBy(creator)
@@ -59,6 +66,7 @@ public class GroupChatServiceImpl implements GroupChatService {
         // Add other members
         if (request.getMemberPublicIds() != null) {
             for (String memberPublicId : request.getMemberPublicIds()) {
+                chatAccessGuard.verifyApprovedOrganizationMember(organizationId, memberPublicId);
                 User member = chatAccessGuard.getUserOrThrow(memberPublicId);
                 
                 GroupChatMember groupChatMember = GroupChatMember.builder()
@@ -77,8 +85,9 @@ public class GroupChatServiceImpl implements GroupChatService {
 
     @Override
     public List<GroupChatResponse> getUserGroupChats(String userPublicId) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         chatAccessGuard.getUserOrThrow(userPublicId);
-        List<GroupChat> groupChats = groupChatRepository.findActiveGroupsForUser(userPublicId);
+        List<GroupChat> groupChats = groupChatRepository.findActiveGroupsForUserInOrganization(organizationId, userPublicId);
         return groupChats.stream()
                 .map(GroupChatResponse::mapGroupChatToResponse)
                 .collect(Collectors.toList());
@@ -86,7 +95,8 @@ public class GroupChatServiceImpl implements GroupChatService {
 
     @Override
     public GroupChatResponse getGroupChatById(String groupChatPublicId) {
-        GroupChat groupChat = groupChatRepository.findByPublicId(groupChatPublicId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        GroupChat groupChat = groupChatRepository.findByOrganizationIdAndPublicId(organizationId, groupChatPublicId)
                 .orElseThrow(() -> new NotFoundException("Group chat not found: " + groupChatPublicId));
         return GroupChatResponse.mapGroupChatToResponse(groupChat);
     }

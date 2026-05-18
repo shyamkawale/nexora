@@ -13,6 +13,7 @@ import com.svk.nexora_be.repository.GroupChatMessageRepository;
 import com.svk.nexora_be.service.ChatAccessGuard;
 import com.svk.nexora_be.service.GroupChatMessageService;
 import com.svk.nexora_be.service.MediaFileService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,22 +39,29 @@ public class GroupChatMessageServiceImpl implements GroupChatMessageService {
 
     @Override
     public Page<GroupChatMessageResponse> getGroupChatMessages(String currentUserId, String groupChatPublicId, Pageable pageable) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User sender = chatAccessGuard.getUserOrThrow(currentUserId);
 
-        GroupChat chat = groupChatRepository.findByPublicId(groupChatPublicId)
+        GroupChat chat = groupChatRepository.findByOrganizationIdAndPublicId(organizationId, groupChatPublicId)
                 .orElseThrow(() -> new NotFoundException("Group chat not found: " + groupChatPublicId));
 
         chatAccessGuard.verifyGroupMembership(sender.getId(), chat.getId());
 
-        return groupChatMessageRepository.findByGroupChatPublicIdOrderByCreatedAtDesc(groupChatPublicId, pageable)
+        return groupChatMessageRepository
+                .findByGroupChatOrganizationIdAndGroupChatPublicIdOrderByCreatedAtDesc(
+                        organizationId,
+                        groupChatPublicId,
+                        pageable
+                )
                 .map(GroupChatMessageResponse::mapGroupChatMessageToResponse);
     }
 
     @Override
     public GroupChatMessageResponse sendMessage(String userId, GroupChatMessageRequest request) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User sender = chatAccessGuard.getUserOrThrow(userId);
 
-        GroupChat groupChat = groupChatRepository.findByPublicId(request.getChatId())
+        GroupChat groupChat = groupChatRepository.findByOrganizationIdAndPublicId(organizationId, request.getChatId())
                 .orElseThrow(() -> new NotFoundException("Group chat not found: " + request.getChatId()));
 
         chatAccessGuard.verifyGroupMembership(sender.getId(), groupChat.getId());

@@ -39,6 +39,15 @@ export class AuthInterceptor implements HttpInterceptor {
       });
     }
 
+    const organizationId = localStorage.getItem('activeOrganizationId');
+    if (organizationId && !this.isRefreshOrAuthRequest(request)) {
+      authReq = authReq.clone({
+        setHeaders: {
+          'X-Organization-Id': organizationId
+        }
+      });
+    }
+
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
         console.debug('[AuthInterceptor] caught error ->', error.status, request.url);

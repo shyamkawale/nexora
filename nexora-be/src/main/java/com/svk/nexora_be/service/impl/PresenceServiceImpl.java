@@ -3,6 +3,7 @@ package com.svk.nexora_be.service.impl;
 import com.svk.nexora_be.entity.User;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.PresenceService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,11 +40,11 @@ public class PresenceServiceImpl implements PresenceService {
             userRepository.save(user);
 
             // Store in Redis with expiry
-            String presenceKey = USER_PRESENCE_KEY_PREFIX + user.getPublicId();
+            String presenceKey = getUserPresenceKey(user.getPublicId());
             redisTemplate.opsForValue().set(presenceKey, "online", PRESENCE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             // Add to online users set
-            redisTemplate.opsForSet().add(ONLINE_USERS_KEY, user.getPublicId());
+            redisTemplate.opsForSet().add(getOnlineUsersKey(), user.getPublicId());
 
             log.info("✅ User marked online: {}", user.getPublicId());
 
@@ -65,11 +66,11 @@ public class PresenceServiceImpl implements PresenceService {
             userRepository.save(user);
 
             // Remove from Redis
-            String presenceKey = USER_PRESENCE_KEY_PREFIX + user.getPublicId();
+            String presenceKey = getUserPresenceKey(user.getPublicId());
             redisTemplate.delete(presenceKey);
 
             // Remove from online users set
-            redisTemplate.opsForSet().remove(ONLINE_USERS_KEY, user.getPublicId());
+            redisTemplate.opsForSet().remove(getOnlineUsersKey(), user.getPublicId());
 
             log.info("🔴 User marked offline: {}", user.getPublicId());
 
@@ -84,7 +85,7 @@ public class PresenceServiceImpl implements PresenceService {
     @Override
     public boolean isUserOnline(String userId) {
         try {
-            String presenceKey = USER_PRESENCE_KEY_PREFIX + userId;
+            String presenceKey = getUserPresenceKey(userId);
             Boolean exists = redisTemplate.hasKey(presenceKey);
             return exists != null && exists;
         } catch (Exception e) {
@@ -96,7 +97,7 @@ public class PresenceServiceImpl implements PresenceService {
     @Override
     public List<String> getAllOnlineUsers() {
         try {
-            Set<String> onlineUsers = redisTemplate.opsForSet().members(ONLINE_USERS_KEY);
+            Set<String> onlineUsers = redisTemplate.opsForSet().members(getOnlineUsersKey());
             if (onlineUsers == null || onlineUsers.isEmpty()) {
                 return List.of();
             }
@@ -104,13 +105,13 @@ public class PresenceServiceImpl implements PresenceService {
             // Verify each user's presence key still exists (defensive cleanup)
             return onlineUsers.stream()
                 .filter(userId -> {
-                    String presenceKey = USER_PRESENCE_KEY_PREFIX + userId;
+                    String presenceKey = getUserPresenceKey(userId);
                     Boolean hasKey = redisTemplate.hasKey(presenceKey);
                     
                     // If presence key expired but user still in set, remove them
                     if (hasKey == null || !hasKey) {
                         log.warn("🧹 Cleaning up expired presence for user: {}", userId);
-                        redisTemplate.opsForSet().remove(ONLINE_USERS_KEY, userId);
+                        redisTemplate.opsForSet().remove(getOnlineUsersKey(), userId);
                         return false;
                     }
                     return true;
@@ -126,7 +127,10 @@ public class PresenceServiceImpl implements PresenceService {
     public void broadcastPresenceUpdate(String userId, boolean isOnline) {
         try {
             var update = new PresenceUpdateMessage(userId, isOnline, LocalDateTime.now().toString());
-            messagingTemplate.convertAndSend("/topic/presence/updates", update);
+            messagingTemplate.convertAndSend(
+                    "/topic/org/" + OrganizationContextHolder.requireOrganizationPublicId() + "/presence/updates",
+                    update
+            );
             log.info("📢 Presence update broadcast: {} -> {}", userId, isOnline ? "ONLINE" : "OFFLINE");
         } catch (Exception e) {
             log.error("❌ Error broadcasting presence: {}", e.getMessage());
@@ -158,5 +162,15 @@ public class PresenceServiceImpl implements PresenceService {
         public String getTimestamp() {
             return timestamp;
         }
+    }
+
+    private String getOnlineUsersKey() {
+        String organizationPublicId = OrganizationContextHolder.requireOrganizationPublicId();
+        return ONLINE_USERS_KEY + ":org:" + organizationPublicId;
+    }
+
+    private String getUserPresenceKey(String userPublicId) {
+        String organizationPublicId = OrganizationContextHolder.requireOrganizationPublicId();
+        return USER_PRESENCE_KEY_PREFIX + organizationPublicId + ":" + userPublicId;
     }
 }

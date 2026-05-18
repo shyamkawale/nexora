@@ -40,6 +40,10 @@ public class MediaFile {
     @JoinColumn(name = "uploaded_by_id", nullable = false)
     private User uploadedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     @Builder.Default

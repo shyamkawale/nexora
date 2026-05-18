@@ -16,9 +16,19 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
 
     Optional<MediaFile> findByPublicId(String publicId);
 
+    Optional<MediaFile> findByOrganizationIdAndPublicId(Long organizationId, String publicId);
+
     Optional<MediaFile> findByFilePath(String filePath);
 
+    Optional<MediaFile> findByOrganizationIdAndFilePath(Long organizationId, String filePath);
+
     Page<MediaFile> findByUploadedByPublicIdOrderByCreatedAtDesc(String userPublicId, Pageable pageable);
+
+    Page<MediaFile> findByOrganizationIdAndUploadedByPublicIdOrderByCreatedAtDesc(
+            Long organizationId,
+            String userPublicId,
+            Pageable pageable
+    );
 
     /**
      * Find media files in PENDING state created before the given cutoff. Useful for a

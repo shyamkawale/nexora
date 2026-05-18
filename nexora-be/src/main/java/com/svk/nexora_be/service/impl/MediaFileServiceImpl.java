@@ -7,8 +7,10 @@ import com.svk.nexora_be.enums.MediaFileStatus;
 import com.svk.nexora_be.exception.ForbiddenException;
 import com.svk.nexora_be.exception.NotFoundException;
 import com.svk.nexora_be.repository.MediaFileRepository;
+import com.svk.nexora_be.repository.OrganizationRepository;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.MediaFileService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
+    private final OrganizationRepository organizationRepository;
 
     @Override
     public MediaFile registerPendingUpload(String userPublicId,
@@ -31,6 +34,7 @@ public class MediaFileServiceImpl implements MediaFileService {
                                            String mimeType,
                                            long fileSizeBytes,
                                            String fileKey) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User uploader = userRepository.findByPublicId(userPublicId)
                 .orElseThrow(() -> new NotFoundException("User not found: " + userPublicId));
 
@@ -40,6 +44,7 @@ public class MediaFileServiceImpl implements MediaFileService {
                 .fileSize(fileSizeBytes)
                 .filePath(fileKey)
                 .uploadedBy(uploader)
+                .organization(organizationRepository.getReferenceById(organizationId))
                 .status(MediaFileStatus.PENDING)
                 .build();
 
@@ -51,7 +56,8 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Override
     public MediaFileResponse confirmUpload(String userPublicId, String mediaFilePublicId) {
-        MediaFile mediaFile = mediaFileRepository.findByPublicId(mediaFilePublicId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        MediaFile mediaFile = mediaFileRepository.findByOrganizationIdAndPublicId(organizationId, mediaFilePublicId)
                 .orElseThrow(() -> new NotFoundException(
                         "Media file not found: " + mediaFilePublicId));
 
@@ -87,8 +93,17 @@ public class MediaFileServiceImpl implements MediaFileService {
     @Override
     @Transactional(readOnly = true)
     public MediaFile getByPublicId(String mediaFilePublicId) {
-        return mediaFileRepository.findByPublicId(mediaFilePublicId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        return mediaFileRepository.findByOrganizationIdAndPublicId(organizationId, mediaFilePublicId)
                 .orElseThrow(() -> new NotFoundException(
                         "Media file not found: " + mediaFilePublicId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MediaFile getByFilePath(String filePath) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        return mediaFileRepository.findByOrganizationIdAndFilePath(organizationId, filePath)
+                .orElseThrow(() -> new NotFoundException("Media file not found: " + filePath));
     }
 }

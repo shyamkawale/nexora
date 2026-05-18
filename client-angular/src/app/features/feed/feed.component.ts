@@ -5,8 +5,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { LoaderComponent } from '../../shared/components/loader.component';
 import { FeedService, Post, PostComment } from '../../core/services/feed.service';
 import { AuthService } from '../../core/services/auth.service';
+import { OrganizationService } from '../../core/services/organization.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-feed',
@@ -29,7 +30,8 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   constructor(
     private feedService: FeedService,
-    private authService: AuthService
+    private authService: AuthService,
+    private organizationService: OrganizationService
   ) {
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
@@ -39,7 +41,18 @@ export class FeedComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadPosts();
+    this.organizationService.activeOrganization$
+      .pipe(
+        map(organization => organization?.publicId || null),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(organizationId => {
+        this.resetFeed();
+        if (organizationId) {
+          this.loadPosts();
+        }
+      });
   }
 
   refreshPosts(): void {
@@ -62,6 +75,15 @@ export class FeedComponent implements OnInit, OnDestroy {
           this.loadingPosts = false;
         }
       );
+  }
+
+  private resetFeed(): void {
+    this.posts = [];
+    this.newPost = '';
+    this.expandedPostId = null;
+    this.postComments = {};
+    this.newComments = {};
+    this.loadingComments = {};
   }
 
   createPost(): void {

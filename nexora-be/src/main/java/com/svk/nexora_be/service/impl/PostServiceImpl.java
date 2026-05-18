@@ -4,10 +4,12 @@ import com.svk.nexora_be.dto.request.CreatePostRequest;
 import com.svk.nexora_be.dto.response.PostResponse;
 import com.svk.nexora_be.entity.Post;
 import com.svk.nexora_be.entity.User;
+import com.svk.nexora_be.repository.OrganizationRepository;
 import com.svk.nexora_be.repository.PostLikeRepository;
 import com.svk.nexora_be.repository.PostRepository;
 import com.svk.nexora_be.repository.UserRepository;
 import com.svk.nexora_be.service.PostService;
+import com.svk.nexora_be.tenant.OrganizationContextHolder;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,14 +27,17 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
+    private final OrganizationRepository organizationRepository;
 
     @Override
     public PostResponse createPost(String userId, CreatePostRequest request) {
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
         User author = userRepository.findByPublicId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Post post = Post.builder()
                 .author(author)
+                .organization(organizationRepository.getReferenceById(organizationId))
                 .content(request.getContent())
                 .isActive(true)
                 .build();
@@ -43,7 +48,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse getPost(String postId, String currentUserId) {
-        Post post = postRepository.findByPublicId(postId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        Post post = postRepository.findByOrganizationIdAndPublicId(organizationId, postId)
             .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
         long likeCount = postLikeRepository.countByPost(post);
@@ -58,7 +64,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostResponse> getAllPosts(String currentUserId, Pageable pageable) {
-        Page<Post> posts = postRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable);
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        Page<Post> posts = postRepository.findByOrganizationIdAndIsActiveTrueOrderByCreatedAtDesc(organizationId, pageable);
         User currentUser = userRepository.findByPublicId(currentUserId).orElse(null);
 
         return posts.map(post -> {
@@ -72,7 +79,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostResponse> getUserPosts(String userPublicId, String currentUserId) {
-        List<Post> posts = postRepository.findByAuthorPublicIdAndIsActiveTrueOrderByCreatedAtDesc(userPublicId);
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        List<Post> posts = postRepository
+                .findByOrganizationIdAndAuthorPublicIdAndIsActiveTrueOrderByCreatedAtDesc(organizationId, userPublicId);
         User currentUser = userRepository.findByPublicId(currentUserId).orElse(null);
 
         return posts.stream().map(post -> {
@@ -86,7 +95,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public void deletePost(String postId, String userId) {
-        Post post = postRepository.findByPublicId(postId)
+        Long organizationId = OrganizationContextHolder.requireOrganizationId();
+        Post post = postRepository.findByOrganizationIdAndPublicId(organizationId, postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
         User user = userRepository.findByPublicId(userId)

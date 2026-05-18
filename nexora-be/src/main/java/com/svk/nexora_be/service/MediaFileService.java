@@ -46,4 +46,6 @@ public interface MediaFileService {
      * media metadata in a response.
      */
     MediaFile getByPublicId(String mediaFilePublicId);
+
+    MediaFile getByFilePath(String filePath);
 }
