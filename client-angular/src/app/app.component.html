@@ -14,12 +14,25 @@
           </div>
           <ul class="nav-menu">
             <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
-            <li><a routerLink="/feed" routerLinkActive="active">Feed</a></li>
-            <li><a routerLink="/chat" routerLinkActive="active">Chat</a></li>
-            <li><a routerLink="/people" routerLinkActive="active">People</a></li>
+            <li><a routerLink="/organizations" routerLinkActive="active">Organizations</a></li>
+            <ng-container *ngIf="activeOrganization$ | async">
+              <li><a routerLink="/feed" routerLinkActive="active">Feed</a></li>
+              <li><a routerLink="/chat" routerLinkActive="active">Chat</a></li>
+              <li><a routerLink="/people" routerLinkActive="active">People</a></li>
+            </ng-container>
             <li><a routerLink="/settings" routerLinkActive="active">Settings</a></li>
             <li *ngIf="isAdmin$ | async"><a routerLink="/admin/dashboard" routerLinkActive="active" class="admin-link">👨‍💼 Admin Dashboard</a></li>
           </ul>
+          <div class="org-switcher" *ngIf="approvedOrganizations$ | async as organizations">
+            <select
+              *ngIf="organizations.length > 0"
+              [value]="(activeOrganization$ | async)?.publicId || ''"
+              (change)="onOrganizationChange($event)"
+              aria-label="Active organization">
+              <option *ngFor="let org of organizations" [value]="org.publicId">{{ org.name }}</option>
+            </select>
+            <a *ngIf="organizations.length === 0" routerLink="/organizations" class="org-empty">Choose org</a>
+          </div>
           <div class="nav-user-info" (click)="navigateToProfile()" routerLink="/user">
             <div class="user-avatar">👤</div>
             <div class="user-details" *ngIf="currentUser$ | async as user">

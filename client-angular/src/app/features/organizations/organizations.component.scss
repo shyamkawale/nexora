@@ -1,0 +1,194 @@
+.organizations-page {
+  min-height: 100vh;
+  padding: 2rem;
+  background: #f6f7fb;
+  color: #222;
+}
+
+.page-header {
+  max-width: 1120px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.page-header h1,
+.section h2,
+.pending h3 {
+  margin: 0;
+}
+
+.page-header p {
+  margin: 0.4rem 0 0;
+  color: #666;
+}
+
+.section {
+  max-width: 1120px;
+  margin: 0 auto 1.5rem;
+  background: white;
+  border: 1px solid #e8eaf2;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(320px, 1.2fr);
+  gap: 1.5rem;
+}
+
+.single-column {
+  grid-template-columns: 1fr;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-heading span {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.org-list,
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.org-card,
+.member-card,
+.browse-row,
+.pending-row {
+  border: 1px solid #edf0f7;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.org-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.org-card.active {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.12);
+}
+
+.org-card h3,
+.org-card p {
+  margin: 0 0 0.35rem;
+}
+
+.org-card p,
+.browse-row span,
+.member-card span,
+.pending-row span,
+.empty-state {
+  color: #666;
+}
+
+.create-form,
+.browse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: #444;
+  font-weight: 600;
+}
+
+input,
+textarea {
+  border: 1px solid #dfe3ee;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #667eea;
+  color: white;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button.secondary {
+  background: #eef1f8;
+  color: #333;
+}
+
+.browse-row,
+.pending-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.browse-row div,
+.pending-row div,
+.member-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pending {
+  margin-top: 1.5rem;
+}
+
+.pending-actions {
+  flex-direction: row !important;
+}
+
+.notice {
+  max-width: 1120px;
+  margin: 0 auto 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+}
+
+.notice.success {
+  background: #eaf8ef;
+  color: #176b35;
+}
+
+.notice.error {
+  background: #fff0f0;
+  color: #b12c2c;
+}
+
+@media (max-width: 800px) {
+  .two-column,
+  .org-list,
+  .member-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .organizations-page {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,93 @@
+<div class="organizations-page">
+  <header class="page-header">
+    <div>
+      <h1>Organizations</h1>
+      <p>Workspaces keep posts, people, chats, and files separated.</p>
+    </div>
+  </header>
+
+  <div class="notice success" *ngIf="message">{{ message }}</div>
+  <div class="notice error" *ngIf="error">{{ error }}</div>
+
+  <section class="section">
+    <div class="section-heading">
+      <h2>Your organizations</h2>
+      <span>{{ myOrganizations.length }}</span>
+    </div>
+
+    <div class="org-list" *ngIf="myOrganizations.length; else noOrganizations">
+      <article class="org-card" *ngFor="let org of myOrganizations" [class.active]="activeOrganization?.publicId === org.publicId">
+        <div>
+          <h3>{{ org.name }}</h3>
+          <p>{{ org.description || 'No description' }}</p>
+          <small>{{ org.role }} · {{ org.status }}</small>
+        </div>
+        <button *ngIf="org.status === 'APPROVED'" type="button" (click)="setActiveOrganization(org)">
+          {{ activeOrganization?.publicId === org.publicId ? 'Active' : 'Switch' }}
+        </button>
+      </article>
+    </div>
+
+    <ng-template #noOrganizations>
+      <div class="empty-state">
+        Create an organization or request access to one below.
+      </div>
+    </ng-template>
+  </section>
+
+  <section class="section two-column" [class.single-column]="!canCreateOrganizations()">
+    <form class="create-form" (ngSubmit)="createOrganization()" *ngIf="canCreateOrganizations()">
+      <h2>Create organization</h2>
+      <label>
+        Name
+        <input type="text" name="name" [(ngModel)]="createForm.name" maxlength="255" required>
+      </label>
+      <label>
+        Description
+        <textarea name="description" [(ngModel)]="createForm.description" rows="4" maxlength="1000"></textarea>
+      </label>
+      <button type="submit" [disabled]="loading">Create</button>
+    </form>
+
+    <div class="browse">
+      <h2>{{ canCreateOrganizations() ? 'All organizations' : 'Join existing' }}</h2>
+      <article class="browse-row" *ngFor="let org of publicOrganizations">
+        <div>
+          <strong>{{ org.name }}</strong>
+          <span>{{ org.description || 'No description' }}</span>
+        </div>
+        <button type="button" (click)="requestJoin(org)" [disabled]="!canCreateOrganizations() && isPending(org)">
+          {{ canCreateOrganizations() ? 'Open' : (isApproved(org) ? 'Open' : (isPending(org) ? 'Requested' : 'Join')) }}
+        </button>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" *ngIf="activeOrganization">
+    <div class="section-heading">
+      <h2>Members in {{ activeOrganization.name }}</h2>
+      <span>{{ members.length }}</span>
+    </div>
+
+    <div class="member-grid">
+      <article class="member-card" *ngFor="let member of members">
+        <strong>{{ member.user?.username || member.user?.email }}</strong>
+        <span>{{ member.role }}</span>
+      </article>
+    </div>
+
+    <div class="pending" *ngIf="canManageMembers() && pendingMembers.length">
+      <h3>Pending requests</h3>
+      <article class="pending-row" *ngFor="let member of pendingMembers">
+        <div>
+          <strong>{{ member.user?.username || member.user?.email }}</strong>
+          <span>{{ member.user?.email }}</span>
+        </div>
+        <div class="pending-actions">
+          <button type="button" (click)="approve(member)">Approve</button>
+          <button type="button" class="secondary" (click)="reject(member)">Reject</button>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
